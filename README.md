@@ -42,7 +42,6 @@ The whole systems contains the main Peccary package with its Shiny App, plus the
 + PeccaReverse (https://github.com/Peccary-PMX/PeccaReverse);
 + PeccaResult (https://github.com/Peccary-PMX/PeccaResult).
 
-Please click on the desired sub-package link to have access to source codes (no need to visit those pages as users).
 
 ## Contact
 
