@@ -4,13 +4,13 @@ Peccary is a R package made to improve pharmacometrics daily efficiency.
 
 ## Installation 
 
-To install Peccary, execute the following code
+To **install** Peccary, execute the following code
 
 > devtools::install_github("Peccary-PMX/Peccary")
 
 It will directly install the Peccary package and, if not installed yet, the  3 sub-packages PeccaReverse, PeccAnalysis and PeccaResult.
 
-If you want to update Peccary to have the latest version, please update manually each subpackage in addition:
+To **update** Peccary (to have the latest version), please in addition update each subpackage:
 
 > devtools::install_github("Peccary-PMX/PeccaReverse")
 > devtools::install_github("Peccary-PMX/PeccAnalysis")
