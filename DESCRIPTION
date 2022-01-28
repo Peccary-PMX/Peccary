@@ -1,0 +1,48 @@
+Package: peccary
+Title: PD and PK results
+Version: 0.0.0.9000
+Authors@R: person("Thibaud", "Derippe", email = "thibaud.derippe@gmail.com", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 2.0.0)
+VignetteBuilder: knitr
+Depends: R (>= 3.5.0),
+    ggplot2,
+    stringr,
+    dplyr,
+    tidyr,
+    purrr,
+    tibble,
+    cowplot,
+    gridExtra,
+    magrittr,
+    knitr,
+    plotly,
+    shiny,
+    forcats,
+    data.tree,
+    collapsibleTree,
+    ggpubr,
+    rlang,
+    deSolve, 
+    rhandsontable,
+    shinyjqui,
+    shinydashboard,
+    shinyTree,
+    DT,
+    PKNCA,
+    shinyjs,
+    PeccAnalysis,
+    PeccaResult,
+    PeccaReverse,
+    vpc
+Config/testthat/edition: 2
+Remotes: Peccary-PMX/PeccAnalysis,
+    Peccary-PMX/PeccaReverse,
+    Peccary-PMX/PeccaResult

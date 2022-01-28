@@ -1,0 +1,93 @@
+﻿name;nPK;equations;type;return;param_values;initial conditions
+Pk.1comp.ke.Vd.difEq;;"dCentral <- -ke * Central
+Conc  <- Central / Vd";PK;Conc;"ke = 0.3; Vd = 1";
+Pk.1comp.Cl.Vd.difEq;;"ke  <- Cl /Vd
+dCentral <- -ke * Central
+Conc  <- Central / Vd ";PK;Conc;;
+Pk.1comp.ka.Cl.Vd.difEq;;"ke <- Cl/Vd
+dGut <- - ka * Gut
+dCentral <- -ke * Central + ka * Gut
+Conc  <- Central / Vd ";PK;Conc;;
+PD.Simeoni;0;"
+growth <- lambda0 * tumVol / (( 1 + ( lambda0 * X1 / lambda1 ) ** psi ) ** ( 1 / psi ))
+dtumVol <- tumVol *  growth
+";PD;tumVol;;
+PD.Simeoni;1;"tumVol <- X1 + X2 + X3 + X4
+growth <- lambda0 * tumVol /( ( 1 +( lambda0 * X1 /lambda1)**psi)**(1/psi))
+dX1 <- growth - X1 *  [PK] * k2
+dX2 <- X1 * [PK] * k2 - k1 * X2
+dX3 <- k1 * (X2 - X3)
+dX4 <- k1 * (X3 - X4) ";PD;tumVol;;
+PD.Simeoni;2;"tumVol <- X1 + X2 + X3 + X4
+growth <- lambda0 * tumVol /( ( (1 + lambda0 * X1/lambda1)**psi)**(1/psi))
+dX1 <- growth - X1 * ( [PK1] * k2drug1 - [PK2] * k2drug2 -  [PK1] *  [PK2] * k2interac)
+dX2 <- X1 * ([PK1] * k2drug1 -  [PK2] * k2drug2 -  [PK1] *  [PK2] * k2interac) - k1 * X2
+dX3 <- k1* (X2 - X3)
+dX4 <- k1 * (X3 - X4) ";PD;tumVol;;
+Pk.2comp.ke.k12.k21.difEq;;"#k12 <- Q/V1
+#k21 <- Q/V2
+#ke <- Cl/V1
+dCentral <- k21 * Periph - k12 * Central - ke * Central
+dPeriph <- - k21 * Periph + k12 * Central
+Conc <- Central / V1";PK;Conc;;
+Pk.3comp.ke.k12.k21.difEq;;"dCentral <- k21 * Periph2 + k31 * Periph3 - Central * ( k12 + ke + k21 ) 
+dPeriph2 <- - k21 * Periph2 + k12 * Central
+dPeriph3 <- - k21 * Periph3 + k12 * Central
+Conc <- Central / Vd";PK;Conc;;
+Pk.TMDD.full.1com;;"dL <- - ke * L - kon * L * R + koff * P
+dR <-  ksyn - kdeg * R - kon * L * R + koff * P
+dP <- kon * L * R - koff * P - kint * P
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.full.2com;;"dL <- - ke * L - kon * L * R + koff * P - k12 * L + k21 * A 
+dR <-  ksyn - kdeg * R - kon * L * R + koff * P
+dP <- kon * L * R - koff * P - kint * P
+dA <-    k12 * L - k21 * A 
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.QE.1com;;"
+dLtot <- - kin * Ltot - (kel - kint) * L
+dRtot <- ksyn - kdeg * Rtot - (kint - kdeg) * ( Ltot - L )
+L <- 1 / 2 *  ( ( Ltot - Rtot - Kd ) + sqrt(( Ltot - Rtot - kd ) ** 2 + 4 * kd * Ltot ))
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.QE.2com;;"dLtot <- - kin * Ltot - (kel - kint) * L  - k12 * Ltot + k21 * A 
+dRtot <- ksyn - kdeg * Rtot - (kint - kdeg) * (Ltot - L)
+dA <-    k12 * Ltot - k21 * A 
+L <- 1 / 2 *  ( ( Ltot - Rtot - Kd ) + sqrt(( Ltot - Rtot - kd ) ** 2 + 4 * kd * Ltot ))
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.QSS.1com;;"dLtot <- - kin * Ltot - (kel - kint) * L
+dRtot <- ksyn - kdeg * Rtot - ( kint - kdeg ) * ( Ltot - L )
+L <- 1 / 2 *  ( ( Ltot - Rtot - Kss ) + sqrt(( Ltot - Rtot - kss ) ** 2 + 4 * kss * Ltot ))
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.QSS.2com;;"dLtot <- - kin * Ltot - ( kel - kint ) * L   - k12 * Ltot + k21 * A 
+dRtot <- ksyn - kdeg * Rtot - (kint - kdeg) * (Ltot - L)
+L <- 1 / 2 *  ( ( Ltot - Rtot - Kss ) + sqrt(( Ltot - Rtot - kss ) ** 2 + 4 * kss * Ltot ))
+dA <-    k12 * Ltot - k21 * A 
+Conc <- L / Vd
+";PK;Conc;;
+Pk.TMDD.Rtot.1com;;"dL <- - ( kel + kon *  R0 ) * L + ( koff + kon * L ) * P
+dP <- kon * R0 * L - ( koff + kint + kon * L ) * P
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.Rtot.2com;;"dL <- - ( kel + kon *  R0 ) * L + ( koff + kon * L ) * P  - k12 * L + k21 * A 
+dP <- kon * R0 * L - ( koff + kint + kon * L ) * P
+dA <-    k12 * L - k21 * A 
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.IrevBind.1com;;"dL <- - kel * L - kon * L * R
+dR <- ksyn - kdeg * R - kon * L * R
+dP <- kon * L * R - kint * P
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.IrevBind.2com;;"dL <- - kel * L - kon * L * R  - k12 * L + k21 * A 
+dR <- ksyn - kdeg * R - kon * L * R
+dA <-    k12 * L - k21 * A 
+dP <- kon * L * R - kint * P
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.Wagner.1com;;"dLtot <- - kin * Ltot - ( kel - kint ) * L
+L  <- 1 / 2 * (( Ltot - R0 - kd ) + sqrt( ( Ltot - R0 - kd ) ** 2 + 4 * kd * Ltot ))
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.Wagner.2com;;"dLtot <- - kin * Ltot - (kel - kint) * L  - k12 * Ltot + k21 * A 
+L  <- 1/2 * (( Ltot - R0 - kd ) + sqrt( ( Ltot - R0 - kd ) ** 2 + 4 * kd * Ltot ))
+dA <-   k12 * Ltot - k21 * A 
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.MM.1com;;"dL <- - ke * L - Vm * L / ( kd + L )
+Conc <- L / Vd";PK;Conc;;
+Pk.TMDD.MM.1com;;"dL <- - ke * L - Vm * L / ( kd + L )  - k12 * L + k21 * A
+dA <-    k12 * L - k21 * A 
+Conc <- L / Vd";PK;Conc;;

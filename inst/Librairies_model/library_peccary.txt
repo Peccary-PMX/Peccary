@@ -1,0 +1,13 @@
+name	equations
+Pk.1comp.ke.Vd.num	C <- D/Vd * exp(-ke * t)
+Pk.1comp.Cl.Vd.num	"ke <- Cl/Vd
+C <- D/Vd * exp(-ke * t)"
+Pk.1comp.ke.Vd.difEq	"dCentral <- -ke * Central
+C <- Central / Vd "
+Pk.1comp.Cl.Vd.num	"ke <- Cl/Vd
+dCentral <- -ke * Central
+C <- Central / Vd "
+PD.Simeoni	"dX1 <- X1 * (lambda0 - C * k1)
+dX2 <- X1 * C * k1 - k2 * X2
+dX3 <- k2 * (X2 - X3)
+dX4 <- k2 * (X3 - X4) "

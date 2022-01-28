@@ -1,0 +1,70 @@
+### Pecc_balise_free_introduction
+This document has been written by  XXXX, pharmacometricians in YYYY company. It is the report of a PK/PD modeling activities, regarding the following project: XXXX. 
+
+Here are the main section of this document:
+
+1. Context of the study with bibliographic elements
+2. Presentation of the different datasets
+3. Pre-modeling activities (population description, graphical exploration, NCA)
+4. Description of the model equations
+5. Description of the final model
+6. Simulations with the final model
+
+### Pecc_balise_bibliography
+
+Here, describe your project. Remember you can use [@lavielle_automatic_2011] for citing any article (in this section but also in all others).
+
+
+
+### Pecc_balise_datasets
+
+Here are the used datasets:
+
+--- Pecc_insert_dataset_list_start (keep that line, will be removed in final output)
+--- Pecc_insert_dataset_list_end (keep that line, will be removed in final output) 
+
+### Pecc_premodeling
+
+## Population description
+
+Here is a description of the population:
+
+--- Pecc_insert_pop_description
+
+## Exploratory plots
+
+Here are some graphical exploration plots:
+
+--- Pecc_insert_PlotExplo
+
+
+
+### Pecc_modeling
+
+## Methodologie generic
+
+Parameters of the model have been estimated with NONMEM/MONOLIX. M3 methods have been used in case of BLQ. 
+
+## Equation
+
+Here are the equation of the model :
+
+--- Pecc_insert_equation
+
+![Scheme representation of the model](D:/Peccary/Exemple_demo/report/pkscheme.png)
+
+### Pecc_run
+
+Here is the final run of the model:
+
+
+--- Pecc_insert_run
+
+### Pecc_simulation
+
+
+From final run, simulations have been produced, testing two differents protocols:
+
+--- Pecc_insert_simulations
+
+Conclusion: protocole X might be more suitable than the other
