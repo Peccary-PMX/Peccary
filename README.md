@@ -8,7 +8,16 @@ To install Peccary, execute the following code
 
 > devtools::install_github("Peccary-PMX/Peccary")
 
-It will directly install the 4 packages (Peccary, PeccaReverse, PeccAnalysis and PeccaResult)
+It will directly install the 4 sub-packages (Peccary, PeccaReverse, PeccAnalysis and PeccaResult)
+
+## Update
+
+To have a new version of Peccary, it is adviced to re-install the 4 sub-packages independently:
+
+> devtools::install_github("Peccary-PMX/Peccary") # which do not update the three other sub-package automatically
+> devtools::install_github("Peccary-PMX/PeccaReverse")
+> devtools::install_github("Peccary-PMX/PeccAnalysis")
+> devtools::install_github("Peccary-PMX/PeccaResult")
 
 ## How to use Peccary
 
@@ -22,6 +31,17 @@ For now, two main and complementary sources of documentation / tutorial exists r
 2. youtube videos, especially https://www.youtube.com/watch?v=d77c4v2_jcw being a good starting point for using and learning Peccary
 
 Please asks if you want more documentation.
+
+## Peccary sub-packages
+
+The whole systems contains 4 packages:
+
++ Peccary (this page), which contains the Shiny App for using the three next packages;
++ PeccAnalysis (https://github.com/Peccary-PMX/PeccAnalysis);
++ PeccaReverse (https://github.com/Peccary-PMX/PeccaReverse);
++ PeccaResult (https://github.com/Peccary-PMX/PeccaResult).
+
+Please click on the desired sub-packages to have access to source codes.
 
 ## Contact
 
