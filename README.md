@@ -13,7 +13,9 @@ It will directly install the Peccary package and, if not installed yet, the  3 s
 To **update** Peccary (to have the latest version), please in addition update each subpackage:
 
 > devtools::install_github("Peccary-PMX/PeccaReverse")
+
 > devtools::install_github("Peccary-PMX/PeccAnalysis")
+
 > devtools::install_github("Peccary-PMX/PeccaResult")
 
 
