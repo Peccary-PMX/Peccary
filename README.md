@@ -9,7 +9,9 @@ To **install** Peccary, execute only the following code:
 > devtools::install_github("Peccary-PMX/Peccary")
 
 
-To **update** Peccary (to have the latest version), please, in addition to the previous line, execute:
+To **update** Peccary (to have the latest version), please execute:
+
+> devtools::install_github("Peccary-PMX/Peccary")
 
 > devtools::install_github("Peccary-PMX/PeccaReverse")
 
