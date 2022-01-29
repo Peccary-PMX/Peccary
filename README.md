@@ -13,8 +13,6 @@ To **update** Peccary if already installed (to have the latest version), please 
 
 > devtools::install_github(c("Peccary-PMX/Peccary", "Peccary-PMX/PeccAnalysis", "Peccary-PMX/PeccaReverse", "Peccary-PMX/PeccaResult"))
 
-*Explenation: the first Peccary installation also install PeccAnalysis, PeccaReverse and PeccaResult if they are not yet installed. However, the three sub-packages are not updated automatically  for each update of the main Peccary package*
-
 ## How to use Peccary
 
 Once Peccary has been installed and loaded (*"library(peccary)*"), the easiest way to use it is through its Shiny Application. To launch it please execute
