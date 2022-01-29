@@ -9,7 +9,7 @@ To **install** Peccary and its subpacakges the first time, please execute the fo
 > devtools::install_github("Peccary-PMX/Peccary")
 
 
-To **update** Peccary if already installed (and to have the latest version of all sub-packages), please execute instead:
+To **update** Peccary if already installed (to have the latest version of all sub-packages), please execute instead:
 
 > devtools::install_github(c("Peccary-PMX/Peccary", "Peccary-PMX/PeccAnalysis", "Peccary-PMX/PeccaReverse", "Peccary-PMX/PeccaResult"))
 
