@@ -21,7 +21,7 @@ Once Peccary has been installed and loaded (*"library(peccary)*"), the easiest w
 
 For now, two main and complementary sources of documentation / tutorial exists regarding the Shiny Application:
 
-1. a manual ([click here to download](https://github.com/Peccary-PMX/Peccary/releases/download/Documentation/Peccary_Documentation.html)), also foundable  in the releases folder, the Peccary sub-folder or in the GitHub repository.
+1. a manual ([click here to download](https://github.com/Peccary-PMX/Peccary/releases/download/Doc/Peccary_Documentation.html)), also foundable  in the releases folder, the Peccary sub-folder or in the GitHub repository.
 2. youtube videos, especially https://www.youtube.com/watch?v=d77c4v2_jcw being a good starting point for using and learning Peccary
 
 Please asks if you want more documentation.
