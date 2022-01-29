@@ -9,17 +9,11 @@ To **install** Peccary, execute only the following code:
 > devtools::install_github("Peccary-PMX/Peccary")
 
 
-To **update** Peccary (to have the latest version), please execute:
+To **update** Peccary if already installed (to have the latest version), please execute instead:
 
-> devtools::install_github("Peccary-PMX/Peccary")
+> devtools::install_github(c("Peccary-PMX/Peccary", "Peccary-PMX/PeccAnalysis", "Peccary-PMX/PeccaReverse", "Peccary-PMX/PeccaResult"))
 
-> devtools::install_github("Peccary-PMX/PeccaReverse")
-
-> devtools::install_github("Peccary-PMX/PeccAnalysis")
-
-> devtools::install_github("Peccary-PMX/PeccaResult")
-
-
+*Explenation: the first Peccary installation also install PeccAnalysis, PeccaReverse and PeccaResult if they are not yet installed. However, the three sub-packages are not updated automatically  for each update of the main Peccary package*
 
 ## How to use Peccary
 
