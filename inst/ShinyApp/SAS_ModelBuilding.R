@@ -966,6 +966,9 @@ try({
 
     selectcheck <- c(selectcheck, desolvepcc[["toplot"]] )
 
+    if(needupdate == T)  selectcheck <- model_import$Todisplay
+
+
     #### output
     outputbase <- desolvepcc$output_manual
     if(outputbase[[1]] == "")outputbase <- NA
@@ -973,6 +976,8 @@ try({
 
      output_temp <-  tibble(output = factor(outputbase, levels = choicescheck),
              YTYPE = NA_integer_, err_add = "0.1", err_prop = "0.3", export = T, rm = F)
+
+
 
       rhandsontable( output_temp  , width = 500, height = 200, rowHeaders = NULL)
     })
@@ -990,14 +995,16 @@ try({
         max <- max(table_mb_prev$Plot)
 
         if(max == -Inf) max <- 1
-        print("aeraze")
+        # print("aeraze")
         tibble_display <-  crossing(Plot =  1L:max, tibble(Todisplay = choicescheck)) %>%
           left_join(table_mb_prev) %>%
           mutate(Check = case_when(is.na(Check) & Todisplay %in% selectcheck ~ T,
                                    is.na(Check) & !(Todisplay %in% selectcheck) ~ F,
                                    T ~ Check)) %>%
           mutate(Point = if_else(is.na(Point), F,Point))
-        print("aeraze")
+        # print("aeraze")
+
+        if(needupdate == T) tibble_display$Point[tibble_display$Todisplay %in% model_import$Todisplay$Todisplay]  <- TRUE
 
       rhandsontable( tibble_display  , width = 500, height = 200, rowHeaders = NULL)
 

@@ -20,13 +20,13 @@ pecc_server_reunif <- function(input, output, session) {
 #' @export
 pecc_server_reunif_test <- function(input, output, session) {
 
-  source("D:/Peccary/inst/ShinyApp/0SAS_Pecc_ini.R", local = T)
-  source("D:/Peccary/inst/ShinyApp/SAS_exploDataset.R", local = T)
-  source("D:/Peccary/inst/ShinyApp/SAS_explo_plot.R", local = T)
-  source("D:/Peccary/inst/ShinyApp/SAS_NCA.R", local = T)
-  source("D:/Peccary/inst/ShinyApp/SAS_folder.R", local = T)
-  source("D:/Peccary/inst/ShinyApp/SAS_ModelBuilding.R", local = T)
-  source("D:/Peccary/inst/ShinyApp/SAS_report.R", local = T)
+  source("D:/Peccary/Peccary/inst/ShinyApp/0SAS_Pecc_ini.R", local = T)
+  source("D:/Peccary/Peccary/inst/ShinyApp/SAS_exploDataset.R", local = T)
+  source("D:/Peccary/Peccary/inst/ShinyApp/SAS_explo_plot.R", local = T)
+  source("D:/Peccary/Peccary/inst/ShinyApp/SAS_NCA.R", local = T)
+  source("D:/Peccary/Peccary/inst/ShinyApp/SAS_folder.R", local = T)
+  source("D:/Peccary/Peccary/inst/ShinyApp/SAS_ModelBuilding.R", local = T)
+  source("D:/Peccary/Peccary/inst/ShinyApp/SAS_report.R", local = T)
   # module <- list.files("D:/Peccary/inst/Module")
   #
   # if(length(grep("serv\\.R", module)) > 0 ){
@@ -37,7 +37,7 @@ pecc_server_reunif_test <- function(input, output, session) {
   #
   # }
 
-  source("D:/Peccary/inst/ShinyApp/vpc_pckg.R", local = T)
+  source("D:/Peccary/Peccary/inst/ShinyApp/vpc_pckg.R", local = T)
 }
 
 #' @export
