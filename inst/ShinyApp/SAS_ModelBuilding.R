@@ -108,19 +108,33 @@ observeEvent(input$modelLibInput,{
 
   inputs <<- isolate(input$modelLibInput)
   prev_model <<- isolate(input$mb_model)
-  # name_new_input <<- isolate(input$nameLibOutput)
-  # target_new_input <<- isolate(input$targetLibOutput)
 
+
+
+  # Read the csv file containing all model
   models <- read.csv(file.path(find.package("peccary"), "Librairies_model", "library_peccary.csv" ),stringsAsFactors = F,  header = T, sep = ";") %>%
     as_tibble
   names(models) <- c("name","nPK", "equation", "type", "return", "param_values", 	"IC")
 
-  models
 
+ # remove the useless number displayed on the Shiny App
  inputs <-  inputs %>%
     gsub(pattern = "Pk\\(.\\)",replacement = "Pk" )
 
+
+ # Analyse the inputs and make a join with csv file to get required equations
  tibble(name = inputs) %>%
+   mutate(drug = map_chr(name, function(x){
+
+    if(!grepl("_drug", x)) return(NA)
+     paste0("drug", str_split(x,"_drug")[[1]][-1]) %>% paste0(collapse = "_") #stupidly complex
+   })) %>%
+   mutate(name = gsub("_drug.+", "", name)) %>%
+   mutate(nPK = map_dbl(drug, function(x){
+
+    if(is.na(x)) return(NA)
+    str_split(x, pattern = "_")[[1]] %>% length()
+   })) %>%
    left_join(models) -> modelstemp
 
  # add number if needed
@@ -142,7 +156,9 @@ observeEvent(input$modelLibInput,{
 
    modelstemp <-  modelstemp %>%
      rowid_to_column() %>%
-     mutate(equation = map2_chr(equation, rowid, function(x, nn){
+     mutate(equation = pmap_chr(list(equation, rowid, type), function(x, nn,type){
+
+       if(type == "PD") return(x)
 
        temp <- str_split(x, pattern = "\n")[[1]]
 
@@ -177,6 +193,7 @@ observeEvent(input$modelLibInput,{
  }
 
 
+ # Pull the names PK from the table
  pk <- modelstemp %>%
    filter(type == "PK") %>%
    pull(name)
@@ -212,70 +229,31 @@ observeEvent(input$modelLibInput,{
 
  updateSelectInput(session, "modelLibInput", choices = nameall, selected = isolate(input$modelLibInput))
 
-# # # return the value needed
- modelstemp  %>%
-   group_by(name) %>%
-   nest() %>%
-   # {.[[1,2]]} -> data
-   ## remove PD regarding the number of PK input
-   mutate(data = map2(name, data, function(name, data){
+# Now compute the new model !
+# For each line
+ for(a in 1:nrow(modelstemp)){
 
-     if(nrow(data) >1 & unique(data$type) == "PD"){
+# Extract the line
+r <- modelstemp %>% slice(a)
 
-       splittest <- length(str_split(inputs[grep(name, inputs)], "_")[[1]])
+# If PD row and several PK: replace the [PK] blocs
+if(r$type == "PD" & r$nPK > 0 ) {
 
-     data <- data %>%
-       filter(nPK == splittest - 1)
-     }
-    data
-   })) %>%
-   unnest() %>%
-   ## The desired target, by what we need to replace the [PK] bloc
-   mutate(cible = map2(name, type, function(name,type){
+  # else we need a loop
+    drug <- as.double(gsub("drug", "", str_split(r$drug,"_")[[1]]))
 
-     if(type == "PK") return(NA)
+    for(b in 1:length(drug)){
 
+      drugtemp <- drug[[b]]
+      newcible <- paste0(modelstemp$return[modelstemp$type == "PK"][[drugtemp]],"_",drugtemp)
+      modelstemp$equation[a]   <- gsub(paste0("\\[PK", if_else(r$nPK == 1, "",as.character(b)),"\\]"), newcible, modelstemp$equation[a])
+    }
+  }
 
-     drugs <- str_split(inputs[grep(name, inputs)],"_")[[1]][-1]
-
-       return(paste0("Conc_", drugs))
+}
 
 
-#modelstemp$return[modelstemp$type == "PK" & modelstemp$name == name]
-   })) %>%
-   # {.[[3,3]]} -> equation
- # {.[[3,"cible"]]} -> cible
-   # finally replace the valuez
-   mutate(equation = pmap_chr(list(name, nPK,equation, cible), function(name, nPK, equation,cible){
-
-     if(is.na(nPK) ){
-
-
-
-  if(length(pk) == 1) return(gsub("_drug\\[x\\]", "", equation))
-
-       npksel <- which(pk == name)
-      return(gsub("\\[x\\]", npksel, equation))
-
-     }else{
-
-       if(length(cible) == 1){
-
-        return(gsub("\\[PK\\]",  cible[[1]], equation))
-       }else{
-
-
-         for(a in 1:length(cible)){
-
-           equation  <- gsub(paste0("\\[PK", a,"\\]"), cible[[a]], equation)
-         }
-        return(equation)
-       }
-
-
-     }
-
-   })) %>%
+ modelstemp %>%
    # handle _plot addition
    mutate(equation = map2(equation, return, function(x,y){
 
@@ -295,7 +273,7 @@ observeEvent(input$modelLibInput,{
   if(is.na(modelstemp$nPK)) resu <- gsub("Conc *<-", "Conc_output <-", resu)
  }
 
- resu
+ # resu
 
 #
 #

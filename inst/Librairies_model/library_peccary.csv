@@ -20,8 +20,9 @@ dX3 <- k1 * (X2 - X3)
 dX4 <- k1 * (X3 - X4) ";PD;tumVol;;
 PD.Simeoni;2;"tumVol <- X1 + X2 + X3 + X4
 growth <- lambda0 * tumVol /( ( (1 + lambda0 * X1/lambda1)**psi)**(1/psi))
-dX1 <- growth - X1 * ( [PK1] * k2drug1 - [PK2] * k2drug2 -  [PK1] *  [PK2] * k2interac)
-dX2 <- X1 * ([PK1] * k2drug1 -  [PK2] * k2drug2 -  [PK1] *  [PK2] * k2interac) - k1 * X2
+effect <-  [PK1] * k2drug1 + [PK2] * k2drug2 +  [PK1] *  [PK2] * k2interac
+dX1 <- growth - X1 * effect
+dX2 <- X1 * effect - k1 * X2
 dX3 <- k1* (X2 - X3)
 dX4 <- k1 * (X3 - X4) ";PD;tumVol;;
 Pk.2comp.ke.k12.k21.difEq;;"#k12 <- Q/V1
