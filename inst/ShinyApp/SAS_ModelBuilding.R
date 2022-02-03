@@ -107,10 +107,11 @@ observeEvent(input$path_models,{
 observeEvent(input$modelLibInput,{
 
   inputs <<- isolate(input$modelLibInput)
+  for_update <- inputs
   prev_model <<- isolate(input$mb_model)
 
 
-
+# print(inputs)
   # Read the csv file containing all model
   models <- read.csv(file.path(find.package("peccary"), "Librairies_model", "library_peccary.csv" ),stringsAsFactors = F,  header = T, sep = ";") %>%
     as_tibble
@@ -137,7 +138,7 @@ observeEvent(input$modelLibInput,{
    })) %>%
    left_join(models) -> modelstemp
 
- # add number if needed
+ # If several PK, add number after every parameter
  if(sum(grepl("^Pk", inputs)) > 1){
 
    # first need to put extra space to facilitate the process
@@ -223,11 +224,24 @@ observeEvent(input$modelLibInput,{
 
  nameall <- gsub("^Pk\\.",paste0("Pk(", length(pk) +1, ").") , nameall)
 # inputs[length(inputs)] <- paste0(name_new_input, "(",inputs[length(inputs)],")")
-#
- nameall <- unique(c(nameall, isolate(input$modelLibInput)))
+ # verify not an issue with pk number (afeter erase)
+
+ verif_pk_number <- which(grepl("^Pk",for_update))
+
+ if(length(verif_pk_number) > 0){
+
+for(a in verif_pk_number){
+
+  for_update[a] <-  gsub("Pk\\([[:digit:]]\\)", paste0("Pk(",which(verif_pk_number == a),")"), for_update[a])
+}
+
+ }
 
 
- updateSelectInput(session, "modelLibInput", choices = nameall, selected = isolate(input$modelLibInput))
+ nameall <- unique(c(nameall, for_update))
+
+
+ updateSelectInput(session, "modelLibInput", choices = nameall, selected = for_update)
 
 # Now compute the new model !
 # For each line
@@ -239,13 +253,18 @@ r <- modelstemp %>% slice(a)
 # If PD row and several PK: replace the [PK] blocs
 if(r$type == "PD" & r$nPK > 0 ) {
 
-  # else we need a loop
     drug <- as.double(gsub("drug", "", str_split(r$drug,"_")[[1]]))
 
     for(b in 1:length(drug)){
 
       drugtemp <- drug[[b]]
-      newcible <- paste0(modelstemp$return[modelstemp$type == "PK"][[drugtemp]],"_",drugtemp)
+      if(length(pk) > 1){
+        #ex Conc_1
+        newcible <- paste0(modelstemp$return[modelstemp$type == "PK"][[drugtemp]],"_",drugtemp)
+      }else{
+        #ex Conc
+        newcible <- modelstemp$return[modelstemp$type == "PK"][[drugtemp]]
+      }
       modelstemp$equation[a]   <- gsub(paste0("\\[PK", if_else(r$nPK == 1, "",as.character(b)),"\\]"), newcible, modelstemp$equation[a])
     }
   }
