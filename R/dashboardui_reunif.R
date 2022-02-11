@@ -596,7 +596,7 @@ pecc_ui_reunif <- function(){dashboardPage(
               ),
 
 
-              div(style="display:inline-block; width: 150px;height: 75px;", actionButton("update_matrix", label = "update matrix")),
+              # div(style="display:inline-block; width: 150px;height: 75px;", actionButton("update_matrix", label = "update matrix")),
               div(style="display:inline-block; width: 100px;height: 75px;", checkboxInput("matrix_diag", label = "full matrix", value = T)),
               div(style="display:inline-block; width: 200px;height: 75px;", selectInput("matrix_sd_var", label = "coded in", choices = c("sd", "var"), selected = "sd")),
               div(style="display:inline-block; width: 100px;height: 75px;", actionButton("mb_output_add", label = "add output")),

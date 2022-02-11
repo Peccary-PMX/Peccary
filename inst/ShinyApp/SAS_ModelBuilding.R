@@ -652,77 +652,6 @@ observeEvent(input$matrix_diag,{
 
 })
 
-# update matrix -----------------------------------------------------------
-
-observeEvent(input$update_matrix,{
-
-  ## get current matrix
-  # print("start")
-  cmatrix <- hot_to_r(isolate(input$mb_matrix))
-  # cmatrix <<- cmatrix
-
-
-  ## gets values of every parameters with an eta
-
-  ## initial values
-
-  hot_to_r(input$mb_state) %>%
-    filter(Param != "None") %>% pull(Cmt) -> parametersdf
-
-  if(length(parametersdf) > 0) parametersdf <- paste0(parametersdf, "0")
-
-
-  ## main parameter unless fix
-  hot_to_r(input$mb_paramater) %>%
-    filter(Distrib != "fix") %>% pull(Param) -> parameters2
-  # print("herrezrezez")
-  ## biodisponibility
-  hot_to_r(input$mb_event) %>%
-    filter(Proto == 1, use == T) %>%
-    filter(! Fpar %in%  c("None", "input")) %>% pull(ADM) -> parameters3
-
-  # parameters3 <- paste0("Fadm", parameters3)
-  # print("azza")
-  ## make sur each parameters has corresponding row/column
-  for(a in c(parametersdf, parameters2, parameters3)){
-
-    ## if it does not exist
-    if(!a %in% names(cmatrix)){
-
-      # add row
-      newline <-  cmatrix %>% slice(1) %>% map_dfr(~ 0)
-
-      rownamess <- c(rownames(cmatrix), a)
-
-      cmatrix <- bind_rows(cmatrix, newline)
-      rownames(cmatrix) <-  rownamess
-      #add column
-      cmatrix[a] <- c(rep(NA, nrow(cmatrix) - 1), 0.3)
-    }
-
-  }
-  # print("azzfdfda")
-
-  ## remove needed columns or row
-  for(a in names(cmatrix)){
-
-    # if not required anymore
-    if(!a %in% c(parametersdf, parameters2,parameters3)){
-
-      # remove column
-      cmatrix <- cmatrix[which(names(cmatrix) != a)]
-      #remove row
-      # print(names(cmatrix))
-      cmatrix <-  cmatrix[which(rownames(cmatrix) != a), ]
-
-    }
-
-  }
-  # print("zzez")
-  output$mb_matrix <- renderRHandsontable({rhandsontable(cmatrix) })
-
-
-})
 
 # Function to be use in the two next section (big model analyses + update NoVar)
 
@@ -1044,7 +973,7 @@ observeEvent(input$mb_load_model,{
           prese <- if_else(length(choices) == 1, choices[[1]], NA_character_ )
           tibbleoutput <-
             tibble(Output = factor(prese,choices),
-                   Group = "1", Proto = "1", TimeSample = "c(1,5,10)", add = "0.3F", prop = "0.2F", nidgroup = 30, delete = F, cov = "")
+                   Group = "1", Proto = "1", TimeSample = "c(1,5,10,20,30)", add = "0F", prop = "0.2", nidgroup = 30, delete = F, cov = "")
 
 
         }else{
