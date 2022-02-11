@@ -724,91 +724,157 @@ observeEvent(input$update_matrix,{
 
 })
 
+# Function to be use in the two next section (big model analyses + update NoVar)
+
+matrix_fill <- function(tibble_param){
+
+
+  namesparamatrix <- tibble_param %>%
+    filter(Distrib != "NoVar") %>%
+    pull(Param)
+
+
+  # previous_matrix <- tibble() # for test
+  previous_matrix <- hot_to_r(isolate(input$mb_matrix))
+
+  namesprev <- names(previous_matrix)
+
+  ## add bioav and tlag names ! will not be in desolvepcc
+  grepp <- namesprev[grep("(BioAv)|(tlag)", namesprev)]
+  if(length(grepp) > 0){
+    namesparamatrix <- unique(c(namesparamatrix, grepp))
+  }
+
+
+  namesparamatrix <- sort(namesparamatrix)
+  # create new matrix wt
+  temp <- matrix(nrow = length(namesparamatrix), ncol = length(namesparamatrix), data = "0")
+  diag(temp) <- "0.3"
+
+  # replace all value above diag by "
+  if(ncol(temp) >= 2){
+    for(a in 1:(ncol(temp)-1)){
+
+      temp[ 1:a, a + 1] <- ""
+
+    }
+  }
+
+  # transform into dataframe
+
+  temp <- as.data.frame(temp, stringsAsFactors = FALSE)
+  rownames(temp) <- namesparamatrix
+  colnames(temp) <- namesparamatrix
+
+  # for each value, see if a previous one existed, and if yes do the replacement
+  # previous_matrix <- temp; previous_matrix[[1]][[1]] <- 2; A = "IVX"; B = "IVX" # for developing only, to comment
+
+  crossing(A = namesparamatrix, B = namesparamatrix) %>%
+    mutate(C = map2(A,B, function(A, B){ # we don't care about C, its just the transformation that matter
+
+      if(A %in% namesprev & B %in% namesprev){
+
+        value <- try(previous_matrix[[B]][[which(rownames(previous_matrix) == A)]], silent = T)
+
+        if(class(value) != "try-error") temp[[B]][[which(rownames(temp) == A)]] <<- value
+      }
+
+
+    }))
+
+  temp
+
+}
+
 # launch model --------------------------------------------------------------
+
+
+
+
 
 # model <- "file:///D:/these/TMM_models.txt"
 # model <- "file:///D:/these/Pecc_test/3_Models/1_Models/000_21_01_11_5ytype/cov_analsysis/Ref_without_cov_no_growth_estimElim_IL7onExpanHillIL7_10HigherEff4_IL750free2.mlxtran"
 # model <- "file:///D:/Peccary/Exemple_demo/Simeoni/closeIV.mlxtran"
 observeEvent(input$mb_load_model,{
-try({
+  try({
 
-  print("start launch model")
+    print("start launch model")
 
-  if(isolate(input$mb_load_cov) == F){
+    if(isolate(input$mb_load_cov) == F){
 
-    model <- "dX_0 <- IVX \n dX <- - ke * X" # to test
-    model <- isolate(input$mb_model)
+      model <- "dX_0 <- IVX \n dX <- - ke * X" # to test
+      model <- isolate(input$mb_model)
 
-  }else{
+    }else{
 
-    model <- paste(isolate(input$mb_model_cov), isolate(input$mb_model), sep = "\n")
+      model <- paste(isolate(input$mb_model_cov), isolate(input$mb_model), sep = "\n")
 
-  }
+    }
 
-  if(is.double(as.double(model)) & !is.na(as.double(model))){
-
-
-    model <- dossier(as.double(model))@path_source
+    if(is.double(as.double(model)) & !is.na(as.double(model))){
 
 
-  }
+      model <- dossier(as.double(model))@path_source
 
 
-
-  ## if the model is NOT directly usable -> transformation into deSolve syntax
-  needupdate <- F # to know if input$mb_model should be import
-
-
-  model_import <- pecc_import_model(model)
-
-  if(!is.null(model_import)){
-
- model <- model_import$model
- needupdate <- T
-  }
-
-
-  if(needupdate == T){
-
-  updateTextAreaInput(session, inputId = "mb_model", value = model)
-
-  }
-
-  #### End tranformation into deSolve syntax
+    }
 
 
 
-  desolvepcc <- try(deSolve_pecc(model))
-
-  # desolvepcc <-  deSolve_pecc(model) # to test
-
-  if(class(desolvepcc) != "try-error"){
+    ## if the model is NOT directly usable -> transformation into deSolve syntax
+    needupdate <- F # to know if input$mb_model should be import
 
 
-    # updateTextAreaInput(session, inputId = "mb_state2", value = desolvepcc[["state"]]  %>% gsub(pattern = ", ?", replacement = "\n") )
-    # updateTextAreaInput(session, inputId = "mb_paramater2", value = desolvepcc[["parameter"]] %>% gsub(pattern = ", ?", replacement = "\n") )
+    model_import <- pecc_import_model(model)
+
+    if(!is.null(model_import)){
+
+      model <- model_import$model
+      needupdate <- T
+    }
 
 
-    ####### Initial Values
-    print("start mb_state / initial value")
-    output$mb_state <- renderRHandsontable({
+    if(needupdate == T){
 
-      # table_mb_prev <- tibble(Cmt = character(), t0 = character()) # to test when on previous tab
-      # table_mb_prev <- tibble(Cmt = "X", t0 = "3") # to test left_join
-      table_mb_prev <- hot_to_r(isolate(input$mb_state))
+      updateTextAreaInput(session, inputId = "mb_model", value = model)
 
+    }
 
-      if(!is.null(model_import$initial_values)) table_mb_prev <- model_import$initial_values
+    #### End tranformation into deSolve syntax
 
 
-       # Create a tibble with only cmt colunm (one row per compartment)
+
+    desolvepcc <- try(deSolve_pecc(model))
+
+    # desolvepcc <-  deSolve_pecc(model) # to test
+
+    if(class(desolvepcc) != "try-error"){
+
+
+      # updateTextAreaInput(session, inputId = "mb_state2", value = desolvepcc[["state"]]  %>% gsub(pattern = ", ?", replacement = "\n") )
+      # updateTextAreaInput(session, inputId = "mb_paramater2", value = desolvepcc[["parameter"]] %>% gsub(pattern = ", ?", replacement = "\n") )
+
+
+      ####### Initial Values
+      print("start mb_state / initial value")
+      output$mb_state <- renderRHandsontable({
+
+        # table_mb_prev <- tibble(Cmt = character(), t0 = character()) # to test when on previous tab
+        # table_mb_prev <- tibble(Cmt = "X", t0 = "3") # to test left_join
+        table_mb_prev <- hot_to_r(isolate(input$mb_state))
+
+
+        if(!is.null(model_import$initial_values)) table_mb_prev <- model_import$initial_values
+
+
+        # Create a tibble with only cmt colunm (one row per compartment)
         tibble_state <-  tibble(Cmt =desolvepcc[["state"]]) %>%
           left_join(table_mb_prev) # and left_join with previous values
 
         # Add 0 as default value when value is missing
         tibble_state$t0[tibble_state$t0 == "" | is.na(tibble_state$t0)] <- 0
 
-       # Add initial conditions !
+        # Add initial conditions !
         if(nrow(desolvepcc$initialCond)> 0){
           for(a in 1:nrow(desolvepcc$initialCond)){
 
@@ -816,13 +882,13 @@ try({
           }
         }
 
-      rhandsontable(tibble_state, width = 200, height = 200, rowHeaders = NULL)
+        rhandsontable(tibble_state, width = 200, height = 200, rowHeaders = NULL)
 
-    })
+      })
 
-    #### valeur des parametres
-    print("start mb_parameter / initial parameter value")
-    output$mb_paramater <- renderRHandsontable({
+      #### valeur des parametres
+      print("start mb_parameter / initial parameter value")
+
 
 
       # table_mb_prev <- table_param() # for test
@@ -830,29 +896,31 @@ try({
 
       if(!is.null(model_import$values)) table_mb_prev <- model_import$values
 
-          # create a tibble with only parameter column
-        tibble_param <-  tibble(Param =desolvepcc[["parameter"]]) %>%
-          left_join(table_mb_prev) # and join previous table
+      # create a tibble with only parameter column
+      tibble_param <-  tibble(Param =desolvepcc[["parameter"]]) %>%
+        left_join(table_mb_prev) # and join previous table
 
-        # then use table_param to make sure everything is okay
-        tibble_param <- table_param(tibble_param)
+      # then use table_param to make sure everything is okay
+      tibble_param <- table_param(tibble_param)%>% arrange(Param)
 
-      rhandsontable( tibble_param %>% arrange(Param), width = 200, height = 200, rowHeaders = NULL)
+      output$mb_paramater <- renderRHandsontable({
 
-    })
+        rhandsontable( tibble_param , width = 200, height = 200, rowHeaders = NULL)
 
-    #### evenement
-    print("start event")
-    output$mb_event <- renderRHandsontable({
+      })
 
-      # table_event_prev <-  table_input(var = "aze") %>% slice(0) # for test
+      #### evenement
+      print("start event")
+      output$mb_event <- renderRHandsontable({
 
-      table_event_prev <- table_input(hot_to_r(isolate(input$mb_event)))
+        # table_event_prev <-  table_input(var = "aze") %>% slice(0) # for test
 
-      # if no row, add at least one (with NA as Var)
-      if(nrow(table_event_prev) ==0) table_event_prev <- table_input(var = NA)
+        table_event_prev <- table_input(hot_to_r(isolate(input$mb_event)))
 
-      if(!is.null(model_import$input)) table_event_prev <- model_import$input
+        # if no row, add at least one (with NA as Var)
+        if(nrow(table_event_prev) ==0) table_event_prev <- table_input(var = NA)
+
+        if(!is.null(model_import$input)) table_event_prev <- model_import$input
 
 
 
@@ -876,117 +944,69 @@ try({
         rhandsontable( table_event_prev  , width = 400, height = 200, rowHeaders = NULL)
 
 
-    })
+      })
 
-    ### mb_matrix
+      ### mb_matrix
 
 
-    print("start matrix")
+      print("start matrix")
 
-    namesparamatrix <- desolvepcc[["parameter"]]
 
-    # previous_matrix <- tibble() # for test
-    previous_matrix <- hot_to_r(isolate(input$mb_matrix))
+      temp <- matrix_fill(tibble_param = tibble_param)
 
-    namesprev <- names(previous_matrix)
+      output$mb_matrix <- renderRHandsontable({
 
-     ## add bioav and tlag names ! will not be in desolvepcc
-      grepp <- namesprev[grep("(BioAv)|(tlag)", namesprev)]
-      if(length(grepp) > 0){
-        namesparamatrix <- unique(c(namesparamatrix, grepp))
+        if(!is.null(model_import$matrix)) temp <- model_import$matrix
+
+        rhandsontable(temp, width = 500, height = 200)
+
+      })
+
+      updateCheckboxInput(session, "matrix_diag", value = T)
+
+
+      ### Ubdate des checkbox et autres
+
+      # print("start checbock")
+      c(desolvepcc[["state"]], desolvepcc[["output_manual"]], desolvepcc[["toplot"]]) -> choicescheck #%>%
+      choicescheck <- unique(choicescheck[choicescheck != ""])
+
+      if(desolvepcc[["output_manual"]] == ""){
+
+        selectcheck <- desolvepcc[["state"]]
+
+      }else{
+
+        selectcheck <- desolvepcc[["output_manual"]]
+
       }
 
+      selectcheck <- c(selectcheck, desolvepcc[["toplot"]] )
 
- namesparamatrix <- sort(namesparamatrix)
-# create new matrix wt
-    temp <- matrix(nrow = length(namesparamatrix), ncol = length(namesparamatrix), data = "0")
-    diag(temp) <- "0.3"
-
-# replace all value above diag by "
-    if(ncol(temp) >= 2){
-       for(a in 1:(ncol(temp)-1)){
-
-     temp[ 1:a, a + 1] <- ""
-
-      }
-    }
-
-# transform into dataframe
-
-    temp <- as.data.frame(temp, stringsAsFactors = FALSE)
-    rownames(temp) <- namesparamatrix
-    colnames(temp) <- namesparamatrix
-
-    # for each value, see if a previous one existed, and if yes do the replacement
-    # previous_matrix <- temp; previous_matrix[[1]][[1]] <- 2; A = "IVX"; B = "IVX" # for developing only, to comment
-
-    crossing(A = namesparamatrix, B = namesparamatrix) %>%
-      mutate(C = map2(A,B, function(A, B){ # we don't care about C, its just the transformation that matter
-
-        if(A %in% namesprev & B %in% namesprev){
-
-          value <- try(previous_matrix[[B]][[which(rownames(previous_matrix) == A)]], silent = T)
-
-          if(class(value) != "try-error") temp[[B]][[which(rownames(temp) == A)]] <<- value
-        }
+      if(needupdate == T)  selectcheck <- model_import$Todisplay
 
 
-      }))
+      #### output
+      outputbase <- desolvepcc$output_manual
+      if(outputbase[[1]] == "")outputbase <- NA
+      output$mb_output <- renderRHandsontable({
 
-
-    output$mb_matrix <- renderRHandsontable({
-
-      if(!is.null(model_import$matrix)) temp <- model_import$matrix
-
-      rhandsontable(temp, width = 500, height = 200)
-
-    })
-
-    updateCheckboxInput(session, "matrix_diag", value = T)
-
-
-    ### Ubdate des checkbox et autres
-
-    # print("start checbock")
-    c(desolvepcc[["state"]], desolvepcc[["output_manual"]], desolvepcc[["toplot"]]) -> choicescheck #%>%
-    choicescheck <- unique(choicescheck[choicescheck != ""])
-
-    if(desolvepcc[["output_manual"]] == ""){
-
-      selectcheck <- desolvepcc[["state"]]
-
-    }else{
-
-      selectcheck <- desolvepcc[["output_manual"]]
-
-    }
-
-    selectcheck <- c(selectcheck, desolvepcc[["toplot"]] )
-
-    if(needupdate == T)  selectcheck <- model_import$Todisplay
-
-
-    #### output
-    outputbase <- desolvepcc$output_manual
-    if(outputbase[[1]] == "")outputbase <- NA
-    output$mb_output <- renderRHandsontable({
-
-     output_temp <-  tibble(output = factor(outputbase, levels = choicescheck),
-             YTYPE = NA_integer_, err_add = "0.1", err_prop = "0.3", export = T, rm = F)
+        output_temp <-  tibble(output = factor(outputbase, levels = choicescheck),
+                               YTYPE = NA_integer_, err_add = "0.1", err_prop = "0.3", export = T, rm = F)
 
 
 
-      rhandsontable( output_temp  , width = 500, height = 200, rowHeaders = NULL)
-    })
+        rhandsontable( output_temp  , width = 500, height = 200, rowHeaders = NULL)
+      })
 
-    ######## To display
+      ######## To display
 
-    output$mb_display2 <- renderRHandsontable({
+      output$mb_display2 <- renderRHandsontable({
 
-      # table_mb_prev <-  table_display(possiblevalues = NA_character_) %>% slice(0)
+        # table_mb_prev <-  table_display(possiblevalues = NA_character_) %>% slice(0)
 
 
-      table_mb_prev <- table_display(hot_to_r(isolate(input$mb_display2)))
+        table_mb_prev <- table_display(hot_to_r(isolate(input$mb_display2)))
 
 
         max <- max(table_mb_prev$Plot)
@@ -1003,85 +1023,85 @@ try({
 
         if(needupdate == T) tibble_display$Point[tibble_display$Todisplay %in% model_import$Todisplay$Todisplay]  <- TRUE
 
-      rhandsontable( tibble_display  , width = 500, height = 200, rowHeaders = NULL)
+        rhandsontable( tibble_display  , width = 500, height = 200, rowHeaders = NULL)
 
 
-    })
+      })
 
 
-    updateCheckboxGroupInput(session, inputId = "mb_display", choices = choicescheck, selected = selectcheck )
-    updateSelectInput(session, inputId = "ode_baselines", choices = c("None" = "",choicescheck) )
+      updateCheckboxGroupInput(session, inputId = "mb_display", choices = choicescheck, selected = selectcheck )
+      updateSelectInput(session, inputId = "ode_baselines", choices = c("None" = "",choicescheck) )
 
-    ### Optimal design
+      ### Optimal design
 
-    output$OD_sampling <- renderRHandsontable({
+      output$OD_sampling <- renderRHandsontable({
 
-      table_mb_prev <- try(hot_to_r(isolate(input$OD_sampling)))
+        table_mb_prev <- try(hot_to_r(isolate(input$OD_sampling)))
 
-      if(class(table_mb_prev) %in% c("try-error", "NULL")){
+        if(class(table_mb_prev) %in% c("try-error", "NULL")){
 
-        choices <- c(desolvepcc$state, desolvepcc$output_manual[ desolvepcc$output_manual != ""], desolvepcc$toplot[ desolvepcc$toplot != ""])
-        prese <- if_else(length(choices) == 1, choices[[1]], NA_character_ )
-        tibbleoutput <-
-          tibble(Output = factor(prese,choices),
-                 Group = "1", Proto = "1", TimeSample = "c(1,5,10)", add = "0.3F", prop = "0.2F", nidgroup = 30, delete = F, cov = "")
-
-
-      }else{
-
-        tibbleoutput <- table_mb_prev %>%
-          mutate(Output = factor(Output, levels = unique(choicescheck)))
-
-      }
-
-      return(rhandsontable(tibbleoutput, width = 1000, height = 200, rowHeaders = NULL))
-    })
+          choices <- c(desolvepcc$state, desolvepcc$output_manual[ desolvepcc$output_manual != ""], desolvepcc$toplot[ desolvepcc$toplot != ""])
+          prese <- if_else(length(choices) == 1, choices[[1]], NA_character_ )
+          tibbleoutput <-
+            tibble(Output = factor(prese,choices),
+                   Group = "1", Proto = "1", TimeSample = "c(1,5,10)", add = "0.3F", prop = "0.2F", nidgroup = 30, delete = F, cov = "")
 
 
-    # updateTextAreaInput(session, inputId = "mb_events", value = paste0("\"", desolvepcc[["state"]] %>% gsub(pattern = " *=.*", replacement =  ""), "\", 0, 0, \"add\"" ))
-    #     ### udpate plot stat
+        }else{
 
-    output$mb_plot_stat <- renderRHandsontable({
+          tibbleoutput <- table_mb_prev %>%
+            mutate(Output = factor(Output, levels = unique(choicescheck)))
 
-      table_mb_prev <- try(hot_to_r(isolate(input$mb_plot_stat))%>%
-                             mutate(Plot = as.integer(Plot)))
-      # table_mb_prev <-  tibble(Param =desolvepcc[["parameter"]] , Value = rep(3, length(desolvepcc[["parameter"]])))
+        }
 
-
-
-      if(class(table_mb_prev) != "try-error"){
+        return(rhandsontable(tibbleoutput, width = 1000, height = 200, rowHeaders = NULL))
+      })
 
 
-        max <- max(table_mb_prev$Plot)
+      # updateTextAreaInput(session, inputId = "mb_events", value = paste0("\"", desolvepcc[["state"]] %>% gsub(pattern = " *=.*", replacement =  ""), "\", 0, 0, \"add\"" ))
+      #     ### udpate plot stat
 
-        if(max == -Inf) max <- 1
+      output$mb_plot_stat <- renderRHandsontable({
 
-        tibble_display <-  tibble(Plot =  1L:max) %>%
-          left_join(table_mb_prev) %>%
-          mutate(wrap = factor(wrap, levels = c("None", "Output", "Param","Event", "OP", "OE", "PE", "OPE", "O|P", "O|E", "P|E")))
-
-
-      }else{
-
-
-        tibble_display <- tibble(Plot = 1L, wrap = factor("None", levels = c("None", "Output", "Param","Event", "OP", "OE", "PE", "OPE", "O|P", "O|E", "P|E")), ylog = F, xlog = F, delete = F)
-
-      }
-
-
-      rhandsontable( tibble_display  , width = 400, height = 200, rowHeaders = NULL)
-
-
-    })
+        table_mb_prev <- try(hot_to_r(isolate(input$mb_plot_stat))%>%
+                               mutate(Plot = as.integer(Plot)))
+        # table_mb_prev <-  tibble(Param =desolvepcc[["parameter"]] , Value = rep(3, length(desolvepcc[["parameter"]])))
 
 
 
-    # update list available values
-
-    if(!is.null(model_import$res)){
+        if(class(table_mb_prev) != "try-error"){
 
 
-      InfoModelPecc <<- model_import
+          max <- max(table_mb_prev$Plot)
+
+          if(max == -Inf) max <- 1
+
+          tibble_display <-  tibble(Plot =  1L:max) %>%
+            left_join(table_mb_prev) %>%
+            mutate(wrap = factor(wrap, levels = c("None", "Output", "Param","Event", "OP", "OE", "PE", "OPE", "O|P", "O|E", "P|E")))
+
+
+        }else{
+
+
+          tibble_display <- tibble(Plot = 1L, wrap = factor("None", levels = c("None", "Output", "Param","Event", "OP", "OE", "PE", "OPE", "O|P", "O|E", "P|E")), ylog = F, xlog = F, delete = F)
+
+        }
+
+
+        rhandsontable( tibble_display  , width = 400, height = 200, rowHeaders = NULL)
+
+
+      })
+
+
+
+      # update list available values
+
+      if(!is.null(model_import$res)){
+
+
+        InfoModelPecc <<- model_import
 
         initial <- "Initial"
         print("quoi.")
@@ -1091,22 +1111,67 @@ try({
 
         updateCheckboxInput(session, inputId = "useImpData", value = T)
 
+      }
+      # output$mb_plot_stat <- renderRHandsontable({
+      #
+      #   temp_plot_stat <-
+      #
+      #   rhandsontable(temp_plot_stat, width = 200, height = 200, rowHeaders = NULL)
+      #
+      # })
+
+
     }
-        # output$mb_plot_stat <- renderRHandsontable({
-    #
-    #   temp_plot_stat <-
-    #
-    #   rhandsontable(temp_plot_stat, width = 200, height = 200, rowHeaders = NULL)
-    #
-    # })
+    print("end launch model")
 
-
-  }
-  print("end launch model")
-
-})
+  })
 })
 
+
+
+# When param set to NoVar -> update Matrix -----------------------------------
+
+
+observeEvent(input$mb_paramater,{
+
+# print("quoi")
+parameters <<-  hot_to_r(input$mb_paramater)
+
+matrix_temp <<-  hot_to_r(isolate(input$mb_matrix))
+
+
+
+# Is there some matrix col to remove
+
+names_parameters_No_Var <- parameters %>%
+  filter(Distrib  == "NoVar") %>%
+  pull(Param)
+
+torem <- names_parameters_No_Var[names_parameters_No_Var %in% names(matrix_temp)]
+
+
+# Is there a column to add
+
+names_parameters_Var <- parameters %>%
+  filter(Distrib  != "NoVar") %>%
+  pull(Param)
+
+toadd <- names_parameters_Var[! names_parameters_Var %in% names(matrix_temp)]
+
+
+if(length(toadd) > 0 | length(torem) > 0){
+
+
+
+
+  matrix_res <-   matrix_fill(parameters)
+
+  output$mb_matrix <- renderRHandsontable(rhandsontable(matrix_res, width = 500, height = 200))
+
+
+}
+
+})
 
 
 # add output --------------------------------------------------------------
@@ -2066,6 +2131,7 @@ if(isolate(input$mb_nsimul) > 0 & isolate(input$mb_add_error_plot)  == T){
     # add 1E-20 and remove time = 0 during smulation (to have pretty IV)
   times      <- expr(sort(c(1E-20, seq(!!isolate(input$mb_time_from), !!isolate(input$mb_time_to), by = !!isolate(input$mb_time_by)))))
 
+
   simulations <-   make_simulations(parameter = parameters,
                                     model = model,
                                     error = errortemp,
@@ -2073,6 +2139,8 @@ if(isolate(input$mb_nsimul) > 0 & isolate(input$mb_add_error_plot)  == T){
                                     events =  hot_to_r(isolate(input$mb_event)),times = !!times, timesF = F)
   rmt0 <- T
    }else{
+
+     library(RxODE)
 
     times      <- expr(seq(!!isolate(input$mb_time_from), !!isolate(input$mb_time_to), by = !!isolate(input$mb_time_by)))
 
@@ -2631,10 +2699,10 @@ observeEvent(input$ode_trigger_nonmem,{
 
   modell <- isolate(input$mb_model)
   parameters <- hot_to_r(isolate(input$mb_paramater))
-  deSolve_peccc <- deSolve_pecc(modell)
+  deSolve_peccc <<- deSolve_pecc(modell)
   omega <-  hot_to_r(isolate(input$mb_matrix))
   states <- hot_to_r(isolate(input$mb_state))
-  mb_output <- hot_to_r(isolate(input$mb_output)) %>%
+  mb_output <<- hot_to_r(isolate(input$mb_output)) %>%
     filter(export == T)
 
   # print("try nonmem")
