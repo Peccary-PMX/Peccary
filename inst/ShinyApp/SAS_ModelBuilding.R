@@ -2542,18 +2542,19 @@ if(class(test_scheme) != "try-error"){
 
 observeEvent(input$nlmixr_translate,{
 
-  modell <- isolate(input$mb_model)
-  parameters <- hot_to_r(isolate(input$mb_paramater))
-  states <-  hot_to_r(isolate(input$mb_state))
-  eventsinput <- hot_to_r(isolate(input$mb_event)) %>%
+  modell <<- isolate(input$mb_model)
+  parameters <<- hot_to_r(isolate(input$mb_paramater))
+  states <<-  hot_to_r(isolate(input$mb_state))
+  events <<- eventsinput <- hot_to_r(isolate(input$mb_event)) %>%
     filter(Proto == 1 & use == T)
-  odebaseline <- isolate(input$ode_baselines)
-  display2 <-  hot_to_r(isolate(input$mb_display2))
-  mb_output <-  hot_to_r(isolate(input$mb_output))
-  omega <-  hot_to_r(isolate(input$mb_matrix))
+  # odebaseline <- isolate(input$ode_baselines)
+  # display2 <-  hot_to_r(isolate(input$mb_display2))
+ output <<-  mb_output <<-  hot_to_r(isolate(input$mb_output))
+  diagOmega <<- omega <-  hot_to_r(isolate(input$mb_matrix))
 
 nlmixrcode <-  try(deSolve_to_nlmixr(model = modell, states = states, events =  eventsinput,
-                    parameters =  parameters,diagOmega = omega, output = mb_output))
+                    parameters =  parameters,diagOmega = omega, output = mb_output, path_data = explo_path,
+                    xcol = isolate(input$exploX), ycol = isolate(input$exploY) ))
 
 if(class(nlmixrcode) != "try-error"){
 
@@ -2574,15 +2575,19 @@ observeEvent(input$nlmixr_go,{
   Sys.getenv("PATH")
   }
 
+  try(library(nlmixr))
+
 nlmixrcode <- isolate(input$nlmixr_result)
 
-paste0("try({\n",nlmixrcode, "\n})") %>%
+paste0("try({\n",nlmixrcode, "\n
+saveRDS(object = fit.s, file =\"",  isolate(input$nlmixr_path),".nlmixr\")})") %>%
+  # print()
   parse_expr() %>%
   eval
 
 showNotification("Model nlmixr done", type = "message", duration = 5)
 
-
+print("nlmixr Done !")
 })
 
 # ode translation Monolix---------------------------------------------------------

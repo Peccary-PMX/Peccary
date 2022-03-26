@@ -9,17 +9,17 @@ dGut <- - ka * Gut
 dCentral <- -ke * Central + ka * Gut
 Conc  <- Central / Vd ";PK;Conc;;
 PD.Simeoni;0;"
-growth <- lambda0 * tumVol / (( 1 + ( lambda0 * X1 / lambda1 ) ** psi ) ** ( 1 / psi ))
+growth <- lambda0 * X1 / (( 1 + ( lambda0 * tumVol / lambda1 ) ** psi ) ** ( 1 / psi ))
 dtumVol <- tumVol *  growth
 ";PD;tumVol;;
 PD.Simeoni;1;"tumVol <- X1 + X2 + X3 + X4
-growth <- lambda0 * tumVol /( ( 1 +( lambda0 * X1 /lambda1)**psi)**(1/psi))
+growth <- lambda0 * X1 /( ( 1 +( lambda0 * tumVol /lambda1)**psi)**(1/psi))
 dX1 <- growth - X1 *  [PK] * k2
 dX2 <- X1 * [PK] * k2 - k1 * X2
 dX3 <- k1 * (X2 - X3)
 dX4 <- k1 * (X3 - X4) ";PD;tumVol;;
 PD.Simeoni;2;"tumVol <- X1 + X2 + X3 + X4
-growth <- lambda0 * tumVol /( ( (1 + lambda0 * X1/lambda1)**psi)**(1/psi))
+growth <- lambda0 * X1 /( ( (1 + lambda0 * tumVol/lambda1)**psi)**(1/psi))
 effect <-  [PK1] * k2drug1 + [PK2] * k2drug2 +  [PK1] *  [PK2] * k2interac
 dX1 <- growth - X1 * effect
 dX2 <- X1 * effect - k1 * X2

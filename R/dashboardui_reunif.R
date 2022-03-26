@@ -693,6 +693,7 @@ box(title = "Scheme of the model", collapsible = T, collapsed = T, width = 1200,
       # div(style="display:inline-block; width: 300px;height: 200px;",  textInput("samplingTime", label = "Sampling")),
       # div(style="display:inline-block; width: 1200px;height: 200px;",rHandsontableOutput("OD_sampling", width = 1200, height = 200)),
       # div(style="display:inline-block; width: 150px;height: 200px;",  actionButton("OptimDesign_add", "Add line")),
+
       div(style="display:inline-block; width: 150px;height: 200px;",  numericInput(inputId = "scheme_size", label = "Size", value = 0.9, min = 0, max = 1, step = 0.1)),
       div(style="display:inline-block; width: 150px;height: 200px;",  actionButton("scheme_launch", "Go"))
     ),
@@ -709,10 +710,13 @@ box(title = "Scheme of the model", collapsible = T, collapsed = T, width = 1200,
 # nlmixr ------------------------------------------------------------------
 
 box(title = "nlmixr", collapsible = T, collapsed = T, width = 400,
+    div(style="display:inline-block; width: 80px;",  selectInput("nlmixr_methods", "methods", choices = c("saem", "focei", "nlme"), selected = "saem", width = "80px")),
 
     div(style="display:inline-block; width: 50px;height: 75px;", actionButton("nlmixr_translate", "Generate code")),
-    textAreaInput("nlmixr_result",label = ""),
-    # div(style="display:inline-block; width: 400px;height: 75px;", textInput("nlmixr_path", label = "Path", value = "D:/Peccary/Exemple_demo/saemix_test")),
+    textAreaInput("nlmixr_result",label = "", height = 500),
+      div(style="display:inline-block; width: 200px;height: 75px;", textInput(inputId = "nlmixr_path", "Path_to_save", value = "D:/Peccary_Annexe/Exemple_demo/nlmixr_test")),
+
+      # div(style="display:inline-block; width: 400px;height: 75px;", textInput("nlmixr_path", label = "Path", value = "D:/Peccary/Exemple_demo/saemix_test")),
     div(style="display:inline-block; width: 100px;height: 75px;", actionButton("nlmixr_go", "Estimate"))
 
 
