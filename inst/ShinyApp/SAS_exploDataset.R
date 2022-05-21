@@ -545,10 +545,6 @@ observeEvent(input$plotcov_go,{
 x <- isolate(input$plotcov_x)
 y <- isolate(input$plotcov_y)
 
-# x <- "doseCAT_cat"
-# y <- "cov_cat"
-# x <- y <- "Dose_cont"
-
 xexpr <- parse_expr(gsub("(_cat$)|(_cont$)", "", x))
 
 if(y != "") yexpr <- parse_expr(gsub("(_cat$)|(_cont$)", "", y))

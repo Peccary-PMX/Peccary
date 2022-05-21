@@ -484,7 +484,7 @@ pecc_ui_reunif <- function(){dashboardPage(
               DT::dataTableOutput("tableNCA"),
 
             h3("Stat per cov"),
-            DT::dataTableOutput("tableNCA2"),
+            tableOutput("tableNCA2"),
      box(title = "Export & Code", collapsible = T, collapsed = T, width = 400,
 
          fluidRow(

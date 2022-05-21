@@ -304,17 +304,21 @@ print("what")
       tocount <-  c("auclast_cont", "aucinf.obs_cont", "cmax_cont","tmax_cont")
 
     }
+    tocount <- gsub("_.+", "", tocount) # from inmade table1 to real table1 package
 
         if(input$auc_0_x > 0 ) tocount <- c(tocount, paste0("AUC", input$auc_0_x, "_cont" ), paste0("AUC", input$auc_0_x , "log_cont"))
 
+if(forstat != "") forstat <- paste0("|", forstat)
 
-      stat <- Indiv_table %>%
-        pecc_table1(rowl = tocount, coll = forstat)
+        exprtable1 <- expr(table1::table1(~ !!parse_expr(paste0(paste0(tocount, collapse = "+"), forstat)), data=Indiv_table))
 
-      codepeccind <- c(codepeccind, paste0("### Stat table\n stat <- Indiv_table %>%
-        pecc_table1(rowl = c(", paste0(paste0("\"", tocount, "\""), collapse = ", " ), "), coll =", paste0("\"", forstat, "\"")  , "); stat"))
+print(exprtable1)
 
-      output$tableNCA2 <- DT::renderDataTable(options = list(scrollX = TRUE),{stat})
+      codepeccind <- c(codepeccind, paste0("### Stat table\n", deparse(exprtable1) %>% paste0(collapse = "")))
+
+      output$tableNCA2 <- renderTable(options = list(scrollX = TRUE),{eval(exprtable1)})
+
+      # table1(~ conc + uptake | Type, data=CO2)
     })
 
 codepeccind <<- codepeccind
@@ -405,14 +409,18 @@ if(inputcovNCA == ""){
 
    if("C0" %in% names(Indiv_table)) tocount[[6]] <- expr(C0)
 
+
+
+
   if(typeplot == "box"){
 
 
     exprbox <-
-      plot_boxplot(df =  Indiv_table %>%
-                     mutate(no_grp = "All IDs"), x = !!group, !!!tocount, statTest = input$nca_teststat, addPoints = input$nca_bxpltpoint, methodCompar = input$nca_method_box, ylog = input$nca_ylog, outputExpr = T)
+      plot_boxplot(df = Indiv_table %>% mutate(no_grp = "All IDs"), x = !!group, !!!tocount, statTest = input$nca_teststat, addPoints = input$nca_bxpltpoint, methodCompar = input$nca_method_box, ylog = input$nca_ylog, outputExpr = T)
 
-    updateTextAreaInput(session = session, inputId = "nca_code_peccindep",value = paste0(c(codepeccind, "\n\n", paste0("### Boxplot\n\n", deparse(exprbox) %>% paste0(collapse = "\n"))), collapse = "\n\n"))
+    updateTextAreaInput(session = session, inputId = "nca_code_peccindep",value = paste0(c(codepeccind, paste0("### Boxplot\n\n", deparse(exprbox) %>% paste0(collapse = "\n") %>%
+                                                                                                                         gsub(pattern = "%>% *\n*",replacement = " %>% \n") %>%
+                                                                                                                         gsub(pattern = "\\+ *\n*",replacement = " + \n"))), collapse = "\n\n"))
 
   return(
 
@@ -429,11 +437,13 @@ if(inputcovNCA == ""){
 
 correxpr <-
     # mutate(dose= rnorm(12)) %>%
-    plot_correlation(df = Indiv_table,  outputExpr = T,  x = !!group, !!!tocount, cor.coef = input$nca_teststat,
+    plot_correlation(df =  Indiv_table %>% mutate(no_grp = "All IDs"),  outputExpr = T,  x = !!group, !!!tocount, cor.coef = input$nca_teststat,
                      caption = T, conf.int = input$nca_corCI, add = if_else(input$nca_corregline == T, "reg.line", "none"),cor.method = input$nca_method_corr, ylog = input$nca_ylog, xlog = input$nca_xlog )
 
 
-  updateTextAreaInput(session = session, inputId = "nca_code_peccindep",value = paste0(c(codepeccind, "\n\n", paste0("### Plot\n", deparse(correxpr) %>% paste0(collapse = "\n"))), collapse = "\n\n"))
+  updateTextAreaInput(session = session, inputId = "nca_code_peccindep",value = paste0(c(codepeccind,  paste0("### Plot\n", deparse(correxpr) %>% paste0(collapse = "\n")%>%
+                                                                                                                       gsub(pattern = "%>% *\n*",replacement = " %>% \n") %>%
+                                                                                                                       gsub(pattern = "\\+ *\n*",replacement = " + \n"))), collapse = "\n\n"))
 
   return(
 
