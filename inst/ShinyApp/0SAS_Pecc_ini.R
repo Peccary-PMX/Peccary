@@ -994,7 +994,7 @@ file <- gsub(" \\+ code$","", line$File)
       updateSelectInput(session, "pknca_cov", choices = c("", names(explo)), selected = "")
       updateSelectInput(session, "pknca_rateduration", choices = c("", names(explo)), selected = "")
       updateSelectInput(session, "pknca_dose", choices = c("", names(explo)), selected = names(explo)[c(grep("(amt)|(dose)", tolower(names(explo))),1)[[1]]])
-      updateSelectInput(session, "pknca_ADM", choices = c("", names(explo)), selected = names(explo)[c(grep("evid", tolower(names(explo))),1)[[1]]])
+      updateSelectInput(session, "pknca_ADM", choices = c("Single dose time 0", names(explo)), selected = names(explo)[c(grep("evid", tolower(names(explo))),1)[[1]]])
 
     }
 

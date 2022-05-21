@@ -33,7 +33,7 @@ pecc_ui_reunif <- function(){dashboardPage(
                menuSubItem("Dataset explo", tabName = "datasetExplo", icon = icon("dashboard")),
                menuSubItem("Graphical exploration", tabName = "graph", icon = icon("dashboard")),
                menuSubItem("NCA", tabName = "NCA", icon = icon("dashboard")),
-               menuSubItem("PKNCA", tabName = "PKNCA", icon = icon("dashboard")),
+               # menuSubItem("PKNCA", tabName = "PKNCA", icon = icon("dashboard")),
                selectInput(inputId = "preloadeddataset", label = "Preloaded dataset", choices = c("Use external")),
                # textInput("pathExplo", "Path of a dataset", value = ""),
                textAreaInput("filterrExplo", "Filter", value = ""),
@@ -428,6 +428,7 @@ pecc_ui_reunif <- function(){dashboardPage(
                 actionButton(inputId =  "pdfNCA", label = "NCA export"),
                 title = "Plots saved", collapsible = T, collapsed = F),
 
+              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pckgNCA", label = "Software", choices = c("Peccary", "pknca") )),
               div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "groupNCA", label = "Group", choices = "", multiple = T)),
               div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "covNCA", label = "Cov", choices = "")),
               div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "blqNCA", label = "BLQ", choices = "")),
@@ -452,8 +453,33 @@ pecc_ui_reunif <- function(){dashboardPage(
               div(style="display:inline-block; width: 150px;height: 75px;", textInput(inputId = "nca_tabletitle", label = "Title", value = "")),
               div(style="display:inline-block; width: 150px;height: 75px;", textInput(inputId = "nca_name", label = "Name ", value = "")),
               div(style="display:inline-block; width: 150px;height: 75px;", actionButton(inputId = "nca_save", label = "Save")),
+              br(""),
+              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_dose", label = "PKNCA Dose", choices = names(Theoph), selected = "Dose")),
+              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_ADM", label = "PKNCA EVID", choices = names(Theoph), selected = "Dose")),
+              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_route", label = "PKNCA route", choices = c("extravascular", "IV bolus", "IV perf (rate)", "IV perf (time perf)"), selected = "intravascular")),
+              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_rateduration", label = "RateDuration", choices =names(Theoph), selected = "Dose")),
+              br(""),
             # selectInput(inputId = "nca_table_display", label = "Table type", choices = c("Individuals", "Per cov")),
             br(""),
+            box(id = "boxpkncaparam", title = "Option of PKNCA package", width = 12, collapsible = T, collapsed = T,
+                div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_auc.method", label = "auc.method", choices = c("lin up/log down", "linear"), selected = "lin up/log down")),
+                div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_adj.r.squared.factor", label = "adj.r.squared.factor",value = 0.0001)),
+                div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_max.missing", label = "max.missing",selected = "drop", choices = "drop")),
+                div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_conc.na", label = "conc.na",choices = c("drop", "keep"), selected = "drop" )),
+                div(style="display:inline-block; width: 150px;height: 75px;", checkboxInput(inputId = "pknca_first.tmax", label = "first.tmax",value = T)),
+                div(style="display:inline-block; width: 150px;height: 75px;", checkboxInput(inputId = "pknca_allow.tmax.in.half.life", label = "allow.tmax.in.half.life",value = F)),
+                div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_min.hl.points", label = "min.hl.points",value = 3)),
+                div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_min.span.ratio", label = "min.span.ratio",value = 2)),
+                div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_max.aucinf.pext", label = "max.aucinf.pext",value = 20)),
+                div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_min.hl.r.squared", label = "min.hl.r.squared",value = 0.9)),
+                br(""),
+                # br("See https://cran.r-project.org/web/packages/PKNCA/vignettes/Options-for-Controlling-PKNCA.html for an explenation of these options"),s
+                tags$a(href="https://cran.r-project.org/web/packages/PKNCA/vignettes/Options-for-Controlling-PKNCA.html", "See https://cran.r-project.org/web/packages/PKNCA/vignettes/Options-for-Controlling-PKNCA.html for an explenation of these options")
+
+            ),
+             br(""),
+            br(""),
+
             h3("Individual Values"),
               DT::dataTableOutput("tableNCA"),
 
@@ -474,55 +500,6 @@ pecc_ui_reunif <- function(){dashboardPage(
       ),
 
 
-# PKNCA -------------------------------------------------------------------
-
-
-      tabItem("PKNCA",
-
-              # h2("PKNCA package", align = "center"),
-              # h3("made by Bill Denney et. al", align = "center"),
-              # br(""),
-              div(style="display:inline-block; width: 150px;height: 75px;", actionButton(inputId = "pknca_go", label = "Go")),
-              # div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_y", label = "NCA Y", choices = names(Theoph), selected = "conc")),
-              # div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_x", label = "NCA X", choices = names(Theoph), selected = "Time")),
-              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_id", label = "NCA ID", choices = names(Theoph), selected = "Subject")),
-              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_dose", label = "NCA Dose", choices = names(Theoph), selected = "Dose")),
-              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_ADM", label = "NCA EVID", choices = names(Theoph), selected = "Dose")),
-              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_route", label = "NCA route", choices = c("extravascular", "IV bolus", "IV perf (rate)", "IV perf (time perf)"), selected = "intravascular")),
-              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_rateduration", label = "RateDuration", choices =names(Theoph), selected = "Dose")),
-              div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_cov", label = "Cov group", choices = names(Theoph), selected = "Dose")),
-              div(style="display:inline-block; width: 300px;height: 75px;", checkboxGroupInput(inputId = "pknca_output_sel", label = "output", choices = c("Indiv.", "Summary", "plot"), selected = c("Indiv.", "Summary", "plot"),inline = T)),
-              box(title = "Option of PKNCA package",width = 10, collapsible = T, collapsed = T,
-                  div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_auc.method", label = "auc.method", choices = c("lin up/log down", "linear"), selected = "lin up/log down")),
-                  div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_adj.r.squared.factor", label = "adj.r.squared.factor",value = 0.0001)),
-                  div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_max.missing", label = "max.missing",selected = "drop", choices = "drop")),
-                  div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "pknca_conc.na", label = "conc.na",choices = c("drop", "keep"), selected = "drop" )),
-                  div(style="display:inline-block; width: 150px;height: 75px;", checkboxInput(inputId = "pknca_first.tmax", label = "first.tmax",value = T)),
-                  div(style="display:inline-block; width: 150px;height: 75px;", checkboxInput(inputId = "pknca_allow.tmax.in.half.life", label = "allow.tmax.in.half.life",value = F)),
-                  div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_min.hl.points", label = "min.hl.points",value = 3)),
-                  div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_min.span.ratio", label = "min.span.ratio",value = 2)),
-                  div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_max.aucinf.pext", label = "max.aucinf.pext",value = 20)),
-                  div(style="display:inline-block; width: 150px;height: 75px;", numericInput(inputId = "pknca_min.hl.r.squared", label = "min.hl.r.squared",value = 0.9)),
-                  br(""),
-                  # br("See https://cran.r-project.org/web/packages/PKNCA/vignettes/Options-for-Controlling-PKNCA.html for an explenation of these options"),s
-                  tags$a(href="https://cran.r-project.org/web/packages/PKNCA/vignettes/Options-for-Controlling-PKNCA.html", "See https://cran.r-project.org/web/packages/PKNCA/vignettes/Options-for-Controlling-PKNCA.html for an explenation of these options")
-
-                  ),
-              rHandsontableOutput(outputId = "pknca_output"),
-               rHandsontableOutput(outputId = "pknca_output2"),
-              box(title = "Code",width = 10, collapsible = T, collapsed = T,
-                  textAreaInput(inputId = "pknca_code",label = "Code",  width = "100%")
-              ),
-              shinyjqui::jqui_resizable(plotOutput(outputId = "pknca_plot"))
-
-              ),
-
-
-    # run manager -------------------------------------------------------------
-      # tabItem(tabName = "runmanager",
-      #         div(style="display:inline-block; width: 200px;height: 75px;", rHandsontableOutput(outputId  = "runman_table"))
-      #
-      # ),
 
 
       # Model building -------------------------------------------------------------
