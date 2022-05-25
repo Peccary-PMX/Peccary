@@ -263,16 +263,17 @@ pecc_ui_reunif <- function(){dashboardPage(
 
               dataTableOutput("tableexplo"),
 
-              box(title = "table1", collapsible = T, collapsed = T,width = 1000,
+              box(title = "table1", collapsible = T, collapsed = F,width = 1000,
+                  div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "table1reduceBy", label = "Reduce by", multiple = T, choices = "All")),
                   div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "table1x", label = "In rows", multiple = T, choices = "")),
-                  div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "table1y", label = "In col", multiple = F, choices = "")),
+                  div(style="display:inline-block; width: 150px;height: 75px;", selectInput(inputId = "table1y", label = "In col", multiple = T, choices = "")),
                   div(style="display:inline-block; width: 150px;height: 75px;", actionButton(inputId = "table1go", label = "Go")),
-                  rHandsontableOutput(outputId = "table1output"),
+                  tableOutput(outputId = "table1output"),
 
                   box(title = "Code", collapsible = T, collapsed = T, width = 400,
 
 
-                      textAreaInput(inputId = "table1_code",label = "Code",  width = "100%")
+                      textAreaInput(inputId = "table1_code",label = "Code",  width = "100%", height = 40)
 
 
                   )

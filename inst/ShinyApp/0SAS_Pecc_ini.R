@@ -1096,7 +1096,9 @@ file <- gsub(" \\+ code$","", line$File)
 
       updateSelectInput(session, "groupbyExplo", choices = names(temp),selected = NA)
       updateSelectInput(session, "groupbyCovExplo", choices = names(temp),selected = NA)
-
+      updateSelectInput(session, "table1reduceBy", choices = names(temp),selected = NA)
+      updateSelectInput(session, "table1x", choices = c("All", names(temp)),selected = "All")
+      updateSelectInput(session, "table1y", choices = names(temp),selected = NA)
     return(temp)
 
     }, options = list(pageLength = 10, scrollX = TRUE))

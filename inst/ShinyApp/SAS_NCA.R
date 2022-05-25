@@ -138,23 +138,31 @@ if(forstat != "") if(length(unique(Indiv_table[[forstat]])) >7) forstat <- ""
   covgroup <- input$covNCA
   ADM <- input$pknca_ADM
   route <- input$pknca_route
+
+  ratedig <- 0
+  durationdig <- 0
   if(route == "IV perf (rate)"){
-    rateduration <- "RATE"
-    ratedurationwhich <- "rate"
+
     route <- "intravascular"
+    ratedig <- input$pknca_rateduration
   }else if(route == "IV perf (time perf)"){
-    rateduration <- "RATE"
-    ratedurationwhich <- "duration"
+
     route <- "intravascular"
+
+    durationdig <-  input$pknca_rateduration
+  }else if(route == "IV bolus"){
+
+    route <- "intravascular"
+
   }
 
 
-  if(is.na(dose)|dose == "") dose <- "." # to create "one-sided (missing left side)"
+  # if(is.na(dose)|dose == "") dose <- "." # to create "one-sided (missing left side)"
 
   print("beginoption")
   optionslist <- list()
 
-  optionslist$auc.method <- expr(!!isolate(input$pknca_auc.method))
+  if(isolate(input$pknca_auc.method) != "lin up/log down")   optionslist$auc.method <- expr(!!isolate(input$pknca_auc.method))
   if(isolate(input$pknca_adj.r.squared.factor) != 0.0001) optionslist$adj.r.squared.factor <- expr(!!isolate(input$pknca_adj.r.squared.factor))
   if(isolate(input$pknca_max.missing)!= "drop") optionslist$max.missing <- expr(!!isolate(input$pknca_max.missing))
   if(isolate(input$pknca_conc.na)!= "drop") optionslist$conc.na <- expr(!!isolate(input$pknca_conc.na))
@@ -165,74 +173,25 @@ if(forstat != "") if(length(unique(Indiv_table[[forstat]])) >7) forstat <- ""
   if(isolate(input$pknca_max.aucinf.pext)!= 20) optionslist$max.aucinf.pext <- expr(!!isolate(input$pknca_max.aucinf.pext))
   if(isolate(input$pknca_min.hl.r.squared)!= 0.9) optionslist$min.hl.r.squared <- expr(!!isolate(input$pknca_min.hl.r.squared))
 
-  optionslist$single.dose.aucs <- expr(PKNCA.options()$single.dose.aucs  %>% mutate(end = Inf))
   optionslist<<-optionslist
-
-
-
-  print("begin conclist")
-  conclist <- list()
-
-  if(ADM == "Single dose time 0"){
-
-    conclist$data <-  expr(!!explotemp %>%
-           group_by(!!!parse_exprs(Subject), !!parse_expr(Time)) %>%
-           summarise(!!parse_expr(conc) := median(!!parse_expr(conc))))
+  if(length(optionslist) > 0){
+    optionslist <-  expr(list(!!!optionslist))
 
   }else{
-
-    conclist$data <- expr(!!explotemp %>%
-                            filter(!!parse_expr(ADM) == 0) %>%
-                            group_by(!!!parse_exprs(Subject), !!parse_expr(Time)) %>%
-                            summarise(!!parse_expr(conc) := median(!!parse_expr(conc))))
-  }
-
-  subject_formula <- Subject[[1]]
-  if(length(Subject) > 1) subject_formula <- paste0(subject_formula, "/", paste0(Subject[-1], collapse = "+"))
-
-  conclist$formula <- expr(!!parse_expr(conc)~!!parse_expr(Time)|!!parse_expr(subject_formula))
-
-  print("begin doselist")
-  doselist <- list()
-
-  if(ADM == "Single dose time 0"){
-
-    doselist$data <- expr(!!explotemp %>%
-                            group_by(!!!parse_exprs(Subject)) %>%
-                            slice(1) %>%
-                            mutate(!!parse_expr(Time):=0, !!parse_expr(conc):=0 )
-    )
-
-  }else{
-
-
-    doselist$data <- expr(!!explotemp %>%
-                            filter(!!parse_expr(ADM) == 1))
-
-
+    optionslist <- NA
 
   }
 
-  doselist$formula <- expr( !!parse_expr(dose)~!!parse_expr(Time)|!!parse_expr(subject_formula))
-  doselist$route <- expr(!!route)
-  if(route == "intravascular") doselist[[ratedurationwhich]] <- expr(!!rateduration)
+  print(optionslist)
+  groupsplus <- paste0(map_chr(groups, ~deparse(.x)), collapse = " + ") %>% parse_expr()
 
+ bothcode <-  expr(peccary_pknca(dataset = !!explotemp, Time = !!parse_expr(Time),conc = !!parse_expr(conc),
+                     Subject = !!groupsplus, dose = !!parse_expr(dose),EVID = !!parse_expr(ADM),
+                     AUC0_x =!!isolate(input$auc_0_x),route = !!route,rate = !!ratedig, duration = !!durationdig,  computeMedian = T, option = !!optionslist,   outputExpr = T)) %>%
+   eval
 
-  NCA_expr <- expr(NCA_eval <- {
-    conc_obj <- PKNCAconc(!!!conclist)
-
-    dose_obj <- PKNCAdose(!!!doselist)
-
-
-    data_obj_automatic <-PKNCAdata(conc_obj, dose_obj,  options = list(!!!optionslist ))
-
-    pk.nca(data_obj_automatic)
-
-  })
-
-  testtry <- try({
-    eval(NCA_expr)
-  })
+ NCA_expr <- bothcode[[1]]
+ testtry <- try(eval(NCA_expr))
 
   updateTextAreaInput(session = session, inputId = "nca_code_peccindep",value =
                         deparse(NCA_expr,width.cutoff = 500) %>%
@@ -253,13 +212,7 @@ if(forstat != "") if(length(unique(Indiv_table[[forstat]])) >7) forstat <- ""
 
 
   }else{
-    print("ici")
-    Indiv_table_expr <- expr( NCA_eval$result %>%
-                                select(!!!parse_exprs(Subject),PPTESTCD,  PPORRES) %>%
-                                distinct() %>% ## carefull with this distinct!
-                                spread(key = PPTESTCD, value = PPORRES))
-    print("la")
-print(covgroup)
+    Indiv_table_expr <-   bothcode[[2]]
 
     if(covgroup != ""){
 
@@ -273,13 +226,10 @@ print(covgroup)
       Indiv_table_expr <- expr(Indiv_table <- !!Indiv_table_expr)
     }
 
-print("what")
 # NCA_eval <<- NCA_eval
-    Indiv_table_expr <<- Indiv_table_expr
     # print("eval Indiv_table_explr")
     eval(Indiv_table_expr)
     Indiv_table <<- Indiv_table
- print("okay")
     #
 
  codepeccind <- c(paste0(deparse(NCA_expr)  %>% paste0(collapse = "\n")),deparse(Indiv_table_expr) %>% paste0(collapse = "\n"))
@@ -306,13 +256,13 @@ print("what")
     }
     tocount <- gsub("_.+", "", tocount) # from inmade table1 to real table1 package
 
-        if(input$auc_0_x > 0 ) tocount <- c(tocount, paste0("AUC", input$auc_0_x, "_cont" ), paste0("AUC", input$auc_0_x , "log_cont"))
+        if(input$auc_0_x > 0 & input$pckgNCA == "Peccary") tocount <- c(tocount, paste0("AUC", input$auc_0_x ), paste0("AUC", input$auc_0_x , "log_cont"))
+    if(input$auc_0_x > 0 & input$pckgNCA != "Peccary") tocount <- c(tocount, paste0("AUC", input$auc_0_x ))
 
 if(forstat != "") forstat <- paste0("|", forstat)
 
         exprtable1 <- expr(table1::table1(~ !!parse_expr(paste0(paste0(tocount, collapse = "+"), forstat)), data=Indiv_table))
 
-print(exprtable1)
 
       codepeccind <- c(codepeccind, paste0("### Stat table\n", deparse(exprtable1) %>% paste0(collapse = "")))
 

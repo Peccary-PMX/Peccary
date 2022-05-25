@@ -311,9 +311,9 @@ if(length(testt) > 0 ) temp2 <- temp2[-testt]
   paste0(  names(temp2)[!is.na(namescont)], c("_cat")),
   paste0(names(temp2)[is.na(namescont)], c("_cat")))  -> choicesx
 
- choicesx <- choicesx[order(choicesx)]
+ choicesx <- c("All", choicesx[order(choicesx)])
 
-  updateSelectInput(session, "table1x", choices = choicesx)
+  updateSelectInput(session, "table1x", choices = choicesx, selected = "All")
   updateSelectInput(session, "table1y", choices = names(temp2)[order(names(temp2))], selected = NA)
 
   imap_chr(temp, function(x,y){
@@ -486,7 +486,7 @@ observeEvent(input$copymodif,{
 observeEvent(input$table1go,{
   # print("ici deja")
   ## copy past from above
-
+cat(crayon::red("table1"))
   temp <- pecc_new_table()
 
   ###
@@ -499,9 +499,49 @@ observeEvent(input$table1go,{
   # }
 
   ## table1
-# print("ici deja")
+print("ici deja")
 
-   table1 <- try( pecc_table1(dataset  = temp, rowl = isolate(input$table1x), coll = isolate(input$table1y) ))
+
+# list of argument to pass to pecc_table1_original function
+listarg <- list()
+
+print(modifExpr())
+listarg$df <- expr(!!modifExpr())
+reduceBy <- isolate(input$table1reduceBy)
+if(!is.null(reduceBy)){
+  reduceBy <- reduceBy[-which(reduceBy %in% isolate(input$groupbyCovExplo))]
+ if(length(reduceBy)>0) listarg$reduceBy  <- parse_expr(reduceBy %>% paste0(collapse = " + "))
+
+}
+coltemp <- isolate(input$table1y)
+if(!is.null(coltemp)){
+
+listarg$col1 <- parse_expr(coltemp[[1]])
+
+if(length(coltemp) > 1) listarg$col2 <-  parse_expr(coltemp[[2]])
+}
+
+rowstemp <- isolate(input$table1x); if(is.null(rowstemp)) rowstemp <- "All"
+
+if(rowstemp[[1]] != "All"){
+
+  table1code <-  expr(pecc_table1_original(!!! parse_exprs(rowstemp), !!!listarg, outputExpr = T))%>%
+    eval
+}else{
+
+  table1code <-  expr(pecc_table1_original(!!!listarg, outputExpr = T))%>%
+    eval
+
+}
+
+
+print(table1code)
+   text <-   paste0("# ", deparse(explo_expr, width.cutoff = 500),"\n\n", deparse(table1code) %>% paste0(collapse = "\n"))
+
+updateTextAreaInput(session, inputId = "table1_code", value =text)
+
+
+   table1 <- try( eval(table1code))
 # print(table1)
    # print("ici deja")
 # print("on va slicer2")
@@ -509,29 +549,33 @@ observeEvent(input$table1go,{
 
 if(class(table1) != "try-error"){
 
+  print("here")
+  output$table1output <- renderTable(table1)
 
-  colnamestable1 <- table1 %>%
-    slice(1) %>%
-    as.data.frame()
-  colnamestable1[1, ] <- names(table1)
-
-  table1 <- bind_rows(colnamestable1, table1)
-  # print("on va slicer2")
-
-if(table1[[1]][[1]] == "Table1") table1[[1]][[1]] <- ""
-
-  output$table1output <- renderRHandsontable(
-
-    rhandsontable(table1, colHeaders = F, rowHeaders = F))
-
-}
-
-   #
-   text <-    deparse(expr(pecc_table1(dataset  = !!modifExpr(), rowl = c(!!!isolate(input$table1x)), coll = !!isolate(input$table1y) )), width.cutoff = 500) %>%
-     paste0(collapse = "\n")
-   text <-   paste0("# ", deparse(explo_expr, width.cutoff = 500), "\n\n",text, "\n\n# Note: peccary independant code not available for now, but output here is easily verifiable")
-
-updateTextAreaInput(session, inputId = "table1_code", value =text)
+  }
+#
+#   colnamestable1 <- table1 %>%
+#     slice(1) %>%
+#     as.data.frame()
+#   colnamestable1[1, ] <- names(table1)
+#
+#   table1 <- bind_rows(colnamestable1, table1)
+#   # print("on va slicer2")
+#
+# if(table1[[1]][[1]] == "Table1") table1[[1]][[1]] <- ""
+#
+#   output$table1output <- renderRHandsontable(
+#
+#     rhandsontable(table1, colHeaders = F, rowHeaders = F))
+#
+# }
+#
+#    #
+#    text <-    deparse(expr(pecc_table1(dataset  = !!modifExpr(), rowl = c(!!!isolate(input$table1x)), coll = !!isolate(input$table1y) )), width.cutoff = 500) %>%
+#      paste0(collapse = "\n")
+#    text <-   paste0("# ", deparse(explo_expr, width.cutoff = 500), "\n\n",text, "\n\n# Note: peccary independant code not available for now, but output here is easily verifiable")
+#
+# updateTextAreaInput(session, inputId = "table1_code", value =text)
 
 
 })
