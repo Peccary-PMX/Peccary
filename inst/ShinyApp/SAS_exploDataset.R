@@ -1,6 +1,6 @@
 # Function for applying modification
 
-pecc_new_table <- function(){
+pecc_new_table <- function(fortable1 = F){
 
   ## Step1: compute the new table with all the modification
   if(isolate(input$filterrExplo) == "" | is.na(isolate(input$filterrExplo))){
@@ -33,6 +33,17 @@ pecc_new_table <- function(){
   }
   searchcovby <- isolate(input$groupbyCovExplo)
 
+
+  if(fortable1 == T){
+
+    table1reduceBy <-  isolate(input$table1reduceBy)
+    table1reduceBy <- table1reduceBy[table1reduceBy != ""]
+    table1reduceBy <- table1reduceBy[!is.na(table1reduceBy)]
+  if(length(table1reduceBy) > 0 )  searchcovby <- c(searchcovby,table1reduceBy ) %>% unique
+
+  }
+
+
   if(length(searchcovby) > 0){
 
 
@@ -47,7 +58,7 @@ pecc_new_table <- function(){
 
 
 
-modifExpr <- function(){
+modifExpr <- function(fortable1 = F){
 
   original <- explo_path
 
@@ -88,6 +99,16 @@ modifExpr <- function(){
   # print("cccc")
 
   searchcovby <- isolate(input$groupbyCovExplo)
+
+
+# print("here")
+# print(searchcovby)
+  if(fortable1 == T){
+    table1reduceBy <-  isolate(input$table1reduceBy)
+    table1reduceBy <- table1reduceBy[table1reduceBy != ""]
+    table1reduceBy <- table1reduceBy[!is.na(table1reduceBy)]
+    if(length(table1reduceBy) > 0 )  searchcovby <- c(searchcovby,table1reduceBy ) %>% unique
+  }
 
   if(length(searchcovby) > 0){
     # print("here")
@@ -176,11 +197,10 @@ observeEvent(input$dataexploSave, {
 
 observeEvent(input$dataexploLoad, {
 
-print("ici ma poule")
   selected <- isolate(input$dataexploVersion)
   # selected <- "test"
   path <- file.path(project_file, "0_pecc_project", "dataExplo.rds")
-print(selected)
+# print(selected)
   readRDS(path) %>%
     as_tibble %>%
     filter( dataexplonewVersion == selected) -> line
@@ -240,7 +260,7 @@ c( paste0(  names(temp2)[!is.na(namescont)], c("_cont")),
 
 choicesx <- choicesx[order(choicesx)]
 
-print("here3")
+# print("here3")
 updateSelectInput(session, "table1x", choices = choicesx, selected = line$table1x[[1]])
 updateSelectInput(session, "table1y", choices = names(temp2)[order(names(temp2))], selected = line$table1y)
 #
@@ -486,8 +506,7 @@ observeEvent(input$copymodif,{
 observeEvent(input$table1go,{
   # print("ici deja")
   ## copy past from above
-cat(crayon::red("table1"))
-  temp <- pecc_new_table()
+  temp <- pecc_new_table(fortable1 = T)
 
   ###
    ### teeest
@@ -505,9 +524,10 @@ print("ici deja")
 # list of argument to pass to pecc_table1_original function
 listarg <- list()
 
-print(modifExpr())
-listarg$df <- expr(!!modifExpr())
+listarg$df <- expr(!!modifExpr(fortable1 = T))
 reduceBy <- isolate(input$table1reduceBy)
+
+
 if(!is.null(reduceBy)){
   reduceBy <- reduceBy[-which(reduceBy %in% isolate(input$groupbyCovExplo))]
  if(length(reduceBy)>0) listarg$reduceBy  <- parse_expr(reduceBy %>% paste0(collapse = " + "))
