@@ -261,6 +261,8 @@ if(forstat != "") if(length(unique(Indiv_table[[forstat]])) >7) forstat <- ""
 
 if(forstat != "") forstat <- paste0("|", forstat)
 
+if(forstat != "") if(length(unique(Indiv_table[[forstat]])) >5) forstat <- ""
+
         exprtable1 <- expr(table1::table1(~ !!parse_expr(paste0(paste0(tocount, collapse = "+"), forstat)), data=Indiv_table))
 
 

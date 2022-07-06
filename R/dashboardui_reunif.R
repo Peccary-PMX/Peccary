@@ -486,12 +486,12 @@ pecc_ui_reunif <- function(){dashboardPage(
 
             h3("Stat per cov"),
             tableOutput("tableNCA2"),
-     box(title = "Export & Code", collapsible = T, collapsed = T, width = 400,
+     box(title = "Code", collapsible = T, collapsed = T, width = 400,
 
          fluidRow(
-           div(style="display:inline-block; width: 300px;height: 75px;", textInput(inputId = "nca_path_export", "Path to export", value = "")),
-           div(style="display:inline-block; width: 200px;height: 75px;",  selectInput("nca_to_export", "What to export", choices = c("Individuals", "Per cov", "Both"))),
-           div(style="display:inline-block; width: 100px;height: 75px;",  actionButton("nca_export_go", "Launch")),
+           # div(style="display:inline-block; width: 300px;height: 75px;", textInput(inputId = "nca_path_export", "Path to export", value = "")),
+           # div(style="display:inline-block; width: 200px;height: 75px;",  selectInput("nca_to_export", "What to export", choices = c("Individuals", "Per cov", "Both"))),
+           # div(style="display:inline-block; width: 100px;height: 75px;",  actionButton("nca_export_go", "Launch")),
            textAreaInput(inputId = "nca_code_peccdep",label = "Short Code Peccary",  width = "100%",height = 100),
            textAreaInput(inputId = "nca_code_peccindep",label = "Peccary Independent Code",  width = "100%",height = 500)
          )
