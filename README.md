@@ -1,6 +1,6 @@
 # Peccary
 
-Peccary is a R package made to improve pharmacometrics daily efficiency. 
+Peccary is a R package made to improve pharmacometrics daily efficiency. [See publication on F1000Research for more details](https://f1000research.com/articles/11-951)
 
 ## Installation 
 
