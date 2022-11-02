@@ -359,6 +359,7 @@ try({
 
   noneed <- F
   if(is.na(model[["preloaded"]])) model[["preloaded"]] <- F
+
   if(model[["preloaded"]] != isolate(input$preloadeddataset) & model[["preloaded"]] != F){
   updateSelectInput(session, "preloadeddataset", selected = model[["preloaded"]])
   updateSelectInput(session, "exploX", selected  = model[["xpoint"]])
@@ -368,11 +369,13 @@ try({
   noneed <- T
   }
 
+  if(is.na(model[["xpoint"]])) model[["xpoint"]] <- F
+  if(is.na(model[["ypoint"]])) model[["ypoint"]] <- F
 
-  if((model[["xpoint"]] != isolate(input$exploX) | model[["ypoint"]] != isolate(input$exploY)) & noneed == F){
+  if((model[["xpoint"]] != isolate(input$exploX) | model[["ypoint"]] != isolate(input$exploY)) & noneed == F & model[["preloaded"]] != F){
 
-    updateSelectInput(session, "exploX", selected  = model[["xpoint"]])
-    updateSelectInput(session, "exploY", selected  = model[["ypoint"]])
+    try(updateSelectInput(session, "exploX", selected  = model[["xpoint"]]))
+    try(updateSelectInput(session, "exploY", selected  = model[["ypoint"]]))
 
     showNotification(paste("Observation columns changed to  x = ",  model[["xpoint"]], ", y = ",  model[["ypoint"]]), type = "message", duration = 5)
 
@@ -504,6 +507,22 @@ try({
     mutate(wrap = factor(wrap, levels = c("None", "Output", "Param","Event", "OP", "OE", "PE", "OPE", "O|P", "O|E", "P|E"))) %>%
     mutate(delete = F) %>%
     mutate(Plot = as.integer(Plot))
+
+  if(!"scalewrap" %in% names(plotstat_load)){
+
+    plotstat_load <- plotstat_load %>%
+      add_column(.after = "wrap",scalewrap = factor("free",levels= c("fixed", "free","free_x", "free_y")))
+
+  }else{
+
+
+    plotstat_load <- plotstat_load %>%
+      mutate(scalewrap = factor(scalewrap,levels= c("fixed", "free","free_x", "free_y")))
+
+
+  }
+
+
 
   output$mb_plot_stat <- renderRHandsontable({
 
@@ -1013,7 +1032,8 @@ observeEvent(input$mb_load_model,{
         }else{
 
 
-          tibble_display <- tibble(Plot = 1L, wrap = factor("None", levels = c("None", "Output", "Param","Event", "OP", "OE", "PE", "OPE", "O|P", "O|E", "P|E")), ylog = F, xlog = F, delete = F)
+          tibble_display <- tibble(Plot = 1L, wrap = factor("None", levels = c("None", "Output", "Param","Event", "OP", "OE", "PE", "OPE", "O|P", "O|E", "P|E")),
+                                   scalewrap = factor("free",levels= c("fixed", "free","free_x", "free_y")), ylog = F, xlog = F, delete = F)
 
         }
 
@@ -2176,6 +2196,9 @@ if(isolate(input$mb_nsimul) > 0 & isolate(input$mb_add_error_plot)  == T){
                                         plot_table_cov = hot_to_r(isolate(input$mb_plot_stat)),
                                         events =  hot_to_r(isolate(input$mb_event)),
                                         xpoint = xpointt,ypoint = ypointt,
+                                        scalewrap =  paste0("\"",hot_to_r(isolate(input$mb_plot_stat))$scalewrap[[1]],"\""), # for now only the first value,
+                                        #so not possible to have different scalewrap per plot....
+                                        #but in practice making several plots is almost never used so...
                                         n = isolate(input$mb_nsimul),
                                         ytype_header = ytype_headerr,
                                         name_df = deparse(explotemp) %>% paste(collapse = " "), rmt0 = rmt0)

@@ -362,7 +362,8 @@ observeEvent(input$Project_load,{
 
 ### what happen if we have a project without dataset?
 ### for the moment there are no modification
-
+try( updateTextInput(session, inputId = "path_models", value = file.path(project_file, "0_pecc_project/models.txt"))
+)
   }
   # print("test there")
 
