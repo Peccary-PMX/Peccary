@@ -16,7 +16,7 @@ compteur <- function(){
 
 }
 
-# data
+# data test
 #' @export
 pecc_df_to_code <- function(df){
 
