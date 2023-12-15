@@ -1289,7 +1289,7 @@ if(nrow(events)>0){
 
 observeEvent(input$IDImpMod,{
 
-  print("here change ID")
+  cat("Change ID modeling\n")
  idImpMod <- input$IDImpMod
  # idImpMod <- "id204_mode"
   # load values
@@ -1345,7 +1345,7 @@ observeEvent(input$IDImpMod,{
 
 
  }
- print("here change ID end")
+ cat("Change ID end")
 })
 
 
@@ -1612,6 +1612,7 @@ observeEvent(input$IDImpMod,{
 
 observeEvent(input$OptimDesign_add,{
 
+  cat('Add optimal design')
 
   temp <- hot_to_r(isolate(input$OD_sampling))
 
@@ -1626,6 +1627,7 @@ observeEvent(input$OptimDesign_add,{
 })
 
 observeEvent(input$OptimDesign_delete,{
+
 
   temp <- hot_to_r(isolate(input$OD_sampling))
 
@@ -1650,7 +1652,7 @@ observeEvent(input$OptimDesign_delete,{
 observeEvent(input$OptimDesign,{
 
 
-  print("Beggining optim design")
+  cat("Beggining optim design")
   #
 
   # poped.db <<- character()
@@ -1779,6 +1781,7 @@ if(class(testOD) == "try-error"){
 
 observeEvent(input$mb_load_plot,{
 
+  cat('Load plot')
 
   if(isolate(input$mb_load_cov) == F){
 
