@@ -415,9 +415,9 @@ eval(correxpr)
 
 observeEvent(input$nca_save,{
   # print("ncasave")
-  path_temp <- file.path(project_file,"0_pecc_project/NCA.txt")
+  # path_temp <- file.path(project_file,"0_pecc_project/NCA.txt")
 
-  previous <- try(read.table(path_temp, header = T))
+  previous <- project$NCA #try(read.table(path_temp, header = T))
 
   tibble(
     Name = isolate(input$nca_name),
@@ -453,8 +453,12 @@ observeEvent(input$nca_save,{
 
   }
 
+  project$NCA <- outputt
 
-  write.table(outputt, file = path_temp, row.names = F)
+  saveRDS(project, project$NCA)
+
+  project <<- project
+  # write.table(outputt, file = path_temp, row.names = F)
   #
   #
   output$NCASaved<- renderRHandsontable(rhandsontable(outputt %>%

@@ -137,47 +137,34 @@ observeEvent(input$recentprojectfile,{
 # Goal: create a folder with some subfolder, inclunding one containing every stored metadata (dataset pathways, plots, model....)
 observeEvent(input$Project_create,{
 
+  pathtemp<- 'C:/Users/thiba/OneDrive/Documents/peccary_test'
+  pathtemp <- isolate(input$Project_file_create)
 
   # Take the path
-  path <- isolate(input$Project_file_create) %>%
+  path <- pathtemp %>%
     # path <- "\"file:///D:/these/Pecc_test\"" %>%
     gsub(pattern = "(file:///)|(\")", replacement = "") %>%
     gsub(pattern = "\\\\",replacement =  "/")
 
+
+  projectfile <- list()
+
+
+
   testroot <- str_split(path,pattern =   "/")[[1]]
-  testroot <- paste0(testroot[- length(testroot)], collapse = .Platform$file.sep)
+  projectfile$root <- paste0(testroot[- length(testroot)], collapse = .Platform$file.sep)
 
-  if(dir.exists(testroot) ==F){
 
-    showNotification("Inputed folder does not exist", type = "error", duration = 3, closeButton = T)
 
-  }else{
-
-  project_file <<- path
-
-  dir.create(path)
-  dir.create(file.path(path, "1_Data"))
-  dir.create(file.path(path, "1_Data/1_as_received"))
-  dir.create(file.path(path, "1_Data/2_manually_modified"))
-  dir.create(file.path(path, "1_Data/3_final"))
-
-  dir.create(file.path(path, "2_Analysis"))
-  # dir.create(file.path(path, "2_Analysis/1_Graphical_Exploratorion"))
-  # dir.create(file.path(path, "2_Analysis/2_NCA"))
-  # dir.create(file.path(path, "2_Analysis/3_Model_conception"))
-
-  dir.create(file.path(path, "3_Models"))
-
-  dir.create(file.path(path, "0_pecc_project"))
+  projectfile$path <- path
 
 
   # table containing all dataset metadata
-  write.table(x = tibble( n = numeric(), Path = character(),	File = character(),	  commentary =  character(),x = character(), id = character(), 	x_label = character(), y = character(), y_label = character(),
-                          filter = character(), sep = character(), na = character(), dec = character()),
-              file = file.path(path, "0_pecc_project/datasets.txt"), row.names = F, quote = F)
+  projectfile$datasets <- tibble( n = numeric(), Path = character(),	File = character(),	  commentary =  character(),x = character(), id = character(), 	x_label = character(), y = character(), y_label = character(),
+                          filter = character(), sep = character(), na = character(), dec = character())
 
 
-  write.table(x =  tibble(Name = character(), preloadeddataset = character(),
+  projectfile$exploPplot <-  tibble(Name = character(), preloadeddataset = character(),
                           FilterexploX = character(), exploY= character(),
                           Col= character(), Wrap = character(), exploGrid = character(),
                           exploID = character(),exploPoint= character(),
@@ -189,18 +176,9 @@ observeEvent(input$Project_create,{
                           xlabsExplo = character(),ylabsExplo = character(),
                           captionExplo = character(),sizeTextExplo= character(),
                           secondFilter= character(), allbackground= character(),
-                          addlineExplo= character(), all_bkgrdalpha= character()),
-              file = file.path(path, "0_pecc_project/exploPlot.txt"), row.names = F, quote = F, sep = ";")
+                          addlineExplo= character(), all_bkgrdalpha= character())
 
-  write.table(x =  tibble(model = character(), compartmet = character(),parameter = character(),
-                          event = character(), todisplay= character(),
-                          plotstat= character(), matrix_eta = character(), mb_output = character(),
-                          name = character(),filterpoint= character(),
-                          xpoint= character(), ypoint= character(),
-                          nastringExplo= character(), decExplo = character(),
-                          sepExplo = character(),from = character(),
-                          to = character(),by = character()),
-              file = file.path(path, "0_pecc_project/models.txt"), row.names = F, quote = F, sep = ";")
+  projectfile$models <-  list()
 
 
 
@@ -226,13 +204,15 @@ observeEvent(input$Project_create,{
 
 
  prevpro <- prevpro %>%
-   filter(!(id == as.list(Sys.info())$user & projectpath == input$Project_file_create)) %>%
-    add_row(id = as.list(Sys.info())$user, projectpath = input$Project_file_create,  date = as.character(Sys.time()))
+   filter(!(id == as.list(Sys.info())$user & projectpath == path)) %>%
+    add_row(id = as.list(Sys.info())$user, projectpath = path,  date = as.character(Sys.time()))
 
   write.table(prevpro, file = pathprev, quote = F, sep = ";", row.names = F)
   updateSelectInput(session, inputId =  "recentprojectfile", choices = prevpro$projectpath, selected = input$Project_file_create)
 
 
+
+  saveRDS(projectfile, path)
 
   output$messages <- renderMenu({
 
@@ -242,7 +222,6 @@ observeEvent(input$Project_create,{
   showNotification("Project created", type = "message", duration = 3, closeButton = T)
 
 
-  }
 })
 
 
@@ -254,6 +233,70 @@ observeEvent(input$Project_load,{
   print("projectload")
   project_file <<- isolate(input$Project_file) %>%
     gsub(pattern = "file:///", replacement = "")
+
+  ###
+
+  project <<- readRDS(project_file)
+
+
+  datasets_df <- project$datasets
+
+  # Reload list of datasets
+  output$datasets <- renderRHandsontable({
+
+    rhandsontable(project$datasets, rowHeaders = NULL)
+
+  })
+
+
+
+
+  if(nrow(datasets_df) > 0 ){
+    if("default" %in% names(datasets_df)){
+
+
+      default <- datasets_df %>%
+        filter(default == T) %>%
+        pull(n)
+#
+#       datasets_df %>%
+#         select(-default)
+    }
+
+
+    if(length(default) == 0)  default <- 1
+
+
+  # And put all available in the list of available data
+  selectedd <- unique(paste0(datasets_df$n[datasets_df$n == default],":", datasets_df$File[datasets_df$n == default]))
+
+  # make sure all file exists (if some has been removed)
+  temp_dataset <- datasets_df %>%
+    mutate(test = map2_lgl(Path, File, function(Path, File){
+
+      if(length(grep(":/", Path)) == 0){
+        file_temp <- file.path(project_file, Path, File)
+      }else{
+        file_temp <- file.path(Path, File)
+      }
+
+      file.exists(file_temp)
+
+    })) %>%
+    filter(test == TRUE)
+
+  updateSelectInput(session, inputId = "preloadeddataset", choices = c("Use external", unique(paste0(datasets_df$n,":", datasets_df$File))), selected = selectedd) # what if several with same name..
+  }
+  print('That is done !')
+  # updateSelectInput(session, inputId = "reportDatasetInfo", choices = c(unique(paste0(datasets_df$n,":", datasets_df$File))))
+  # updateTextInput(session, inputId = "path_models", value = file.path(project_file, "0_pecc_project/models.txt"))
+
+
+  # Put the dataset in preload
+
+
+
+  ####
 
   if(dir.exists(file.path(project_file, "0_pecc_project"))) {
 
@@ -326,14 +369,14 @@ observeEvent(input$Project_load,{
 
     # print("test here4")
     # download dataset item
-    if(nrow(datasets_df) > 0){
-    output$datasets <- renderRHandsontable({
-
-
-
-      rhandsontable(datasets_df, rowHeaders = NULL)
-
-    })}
+    # if(nrow(datasets_df) > 0){
+    # output$datasets <- renderRHandsontable({
+    #
+    #
+    #
+    #   rhandsontable(datasets_df, rowHeaders = NULL)
+    #
+    # })}
 
     # print("test here4")
     ## update preloadeddataset
@@ -423,10 +466,10 @@ try({
   })
   }else{
 
-    showNotification("Error: project does not exist", type = "error", closeButton = T, duration = 4 )
+    # showNotification("Error: project does not exist", type = "error", closeButton = T, duration = 4 )
 
   } # end if dir exist
-# print('donc c4est pqs ici')
+print('Project load done')
 })
 
 
@@ -515,7 +558,7 @@ observeEvent(input$load_data_folders,{
 observeEvent(input$path_dataset_manual, {
   try({
   newpath <- input$path_dataset_manual
-  print("heheheh")
+  print("Start path dataset manuel")
   print(newpath)
   # newpath <- "file:///D:/Peccary/Exemple_demo/DATA/Simeoni.txt"
   # newpath <- "file:///D:/Peccary/Exemple_demo/DATA/Theoph.txt"
@@ -542,7 +585,7 @@ newpath <- gsub("file:///", "", newpath) %>%
 
 observeEvent(input$addDataset,{
 
-
+print('Start add dataset')
   # print("################ Trying to add a dataset #################")
   previous <- try(hot_to_r(isolate(input$datasets)) )
 
@@ -588,7 +631,7 @@ observeEvent(input$addDataset,{
 
 
   timehead <- c(headerr[grep("(time)|(^x$)", tolower(headerr))], "")[[1]]
-  obshead <- c(headerr[grep("(^obs)|(^dv)|(^y$)", tolower(headerr))], "")[[1]]
+  obshead <- c(headerr[grep("(^obs)|(^dv)|(^y$)|(^conc)", tolower(headerr))], "")[[1]]
 
   # print("Create the new line")
   new <- tibble(n = 1L,
@@ -622,11 +665,15 @@ observeEvent(input$addDataset,{
              na = as.character(na),
              dec = as.character(dec))
 
-    new$n <- max(previous$n) + 1L
+  if(nrow(previous) >0)  new$n <- max(previous$n) + 1L
+
 
     bindrowsss <- try( bind_rows(previous, new))
 
     output$datasets <- renderRHandsontable( rhandsontable( bindrowsss, rowHeaders = NULL))
+    # print('checkl project dataset')
+    # print(bindrowsss)
+    project$datasets <<-   bindrowsss
 
     choicess <- unique(paste0(bindrowsss$n,":", bindrowsss$File))
 
@@ -635,7 +682,7 @@ observeEvent(input$addDataset,{
   }else{
 
     output$datasets <- renderRHandsontable( rhandsontable( new, rowHeaders = NULL))
-
+    project$datasets <<-   new
     choicess <- unique(paste0(new$n,":", new$File))
 
     selectedd <- choicess[[1]]
@@ -645,6 +692,10 @@ observeEvent(input$addDataset,{
 
   }
 
+
+  # print('checkl project dataset')
+  # print(  project$datasets)
+  # print(  hot_to_r(isolate(input$datasets)))
 
 })
 
@@ -832,28 +883,37 @@ try({
 
 observeEvent(input$save_datasets,{
 
-
-  if(project_file != "none"){
-  temp <- hot_to_r(isolate(input$datasets))
-
-  if(isolate(input$dataset_default) %in% temp$n){
+  print(hot_to_r(isolate(input$datasets)))
+  temp <<- hot_to_r(isolate(input$datasets))
 
 
-    temp <- temp %>%
-      mutate(default = if_else(n == isolate(input$dataset_default), T , F))
-
-  }
+  project$datasets <-  hot_to_r(isolate(input$datasets))
 
 
+  saveRDS(project, project$path)
 
-  write.table(temp, file = file.path(project_file, "/0_pecc_project/datasets.txt"), row.names = F)
-
-  datasets_df <<- isolate(hot_to_r(input$datasets))
-
-  }else{
-
-    showNotification("You need first to load / create a project !", type = "error", duration = 4, closeButton = T)
-  }
+  project <<- project
+  # if(project_file != "none"){
+  # temp <<- hot_to_r(isolate(input$datasets))
+  #
+  # if(isolate(input$dataset_default) %in% temp$n){
+  #
+  #
+  #   temp <- temp %>%
+  #     mutate(default = if_else(n == isolate(input$dataset_default), T , F))
+  #
+  # }
+  #
+  #
+  #
+  # write.table(temp, file = file.path(project_file, "/0_pecc_project/datasets.txt"), row.names = F)
+  #
+  # datasets_df <<- isolate(hot_to_r(input$datasets))
+  #
+  # }else{
+  #
+  #   showNotification("You need first to load / create a project !", type = "error", duration = 4, closeButton = T)
+  # }
 
 })
 
@@ -867,30 +927,34 @@ observeEvent(input$datasets,{
 
 observeEvent(input$preloadeddataset, {
 
+  print('Start Preload dataset')
 
-  preloadeddataset <- isolate(input$preloadeddataset) %>%
+  preloadeddataset <<- isolate(input$preloadeddataset) %>%
     gsub(pattern = "file:///",  replacement = "") %>%
     gsub(pattern = "\\\\",  replacement = "/") %>%
     gsub(pattern = "\"",  replacement = "")
 
-
-updateTextInput(session, "tableExploManipulation", value = "")
-
-# print(  hot_to_r(isolate(input$datasets)))
-
-  if(preloadeddataset != "Use external"){
-
-# print("we are heere")
 #
+updateTextInput(session, "tableExploManipulation", value = "")
+#
+# print(  hot_to_r(isolate(input$datasets)))
+print(preloadeddataset)
+  if(!preloadeddataset %in% c("Use external", ':')){
+
+print("we are heere")
+print( project$datasets)
 #
     # try useless because can return a 0xn df
     line <-  try(
-      datasets_df %>%
+      project$datasets  %>%
         filter(n == gsub(":.+", "", preloadeddataset))
     )
 
-# print("line")
-# # print(line)
+
+
+
+print("line")
+print(line)
 
 file <- gsub(" \\+ code$","", line$File)
 
@@ -906,8 +970,9 @@ file <- gsub(" \\+ code$","", line$File)
 
 
 #
-# print("explo_path")
-# print(explo_path)
+print("explo_path")
+print(explo_path)
+print(line)
 
 
     explo_na <<- line$na
@@ -915,8 +980,8 @@ file <- gsub(" \\+ code$","", line$File)
     explo_dec <<- line$dec
 
     # initialisation before if
-
-
+print('line')
+print(line)
     if("monolix_header" %in% names(line) ){
       if(!is.na(line$monolix_header)){
       if(gsub(" ", "",line$monolix_header) != ""){
@@ -1001,15 +1066,15 @@ file <- gsub(" \\+ code$","", line$File)
 
 
   }
-
-  # pre_loaded plots
+#
+#   # pre_loaded plots
   print("preloadPlot")
-
-  path_temp <- try(file.path(project_file,"0_pecc_project/exploPlot.txt"))
-
-  previous <- try(read.table(path_temp, header = T, na.strings = "NA"))
-
-  if(class(previous) != "try-error"){
+#
+#   path_temp <- try(file.path(project_file,"0_pecc_project/exploPlot.txt"))
+#
+  previous <- project$exploPplot
+#
+  # if(class(previous) != "try-error"){
 
     if(nrow(previous) > 0){
     previous %>%
@@ -1028,15 +1093,15 @@ file <- gsub(" \\+ code$","", line$File)
     output$PlotexplorationSaved <- renderRHandsontable(rhandsontable(outpuutt,rowHeaders = NULL))
     }
 
-  }
+  # }
+#
+#   # end function
+#   # print("preloadNCA")
+  # path_temp2 <- try(file.path(project_file,"0_pecc_project/NCA.txt"))
 
-  # end function
-  # print("preloadNCA")
-  path_temp2 <- try(file.path(project_file,"0_pecc_project/NCA.txt"))
+  previous2 <- project$NCA
 
-  previous2 <- try(read.table(path_temp2, header = T, na.strings = "NA"))
-
-  if(class(previous2) != "try-error"){
+  if(!is.null(previous2)){
     # print("tesst")
     previous2 %>%
       filter(preloadeddataset == isolate(input$preloadeddataset)) %>%
@@ -1049,11 +1114,11 @@ file <- gsub(" \\+ code$","", line$File)
     # print(outpuutt)
     output$NCASaved <- renderRHandsontable(rhandsontable(outpuutt2,rowHeaders = NULL))
   }
-  # print("hereendokays")
-
-
-  ### the dataset observation thing
-
+#   # print("hereendokays")
+#
+#
+#   ### the dataset observation thing
+#
   try(
     output$tableexplo <- DT::renderDataTable({
 
@@ -1107,30 +1172,32 @@ file <- gsub(" \\+ code$","", line$File)
   )
 
 
-  # load data exploration
+ updateSelectInput(session, 'names_model', choices = names(project$models))
+#
+#   # load data exploration
+#
+  # temppath <- project$datasets # file.path(project_file, "0_pecc_project", "dataExplo.rds")
+  #
+  # rapports <- try(readRDS(temppath))
+  # if(class(rapports) != "try-error"){
+  #
+  #   rapports  %>%
+  #     filter(preloadeddataset == isolate(input$preloadeddataset) ) %>%
+  #     pull(dataexplonewVersion) -> rapports
+  #
+  #   if(length(rapports) > 0){
+  #   selected <- NA
+  #   if(length(rapports) > 0) selected <- rapports[[1]]
+  #   updateSelectInput(session, "dataexploVersion", choices = rapports, selected = rapports[[1]])
+  #   }else{
+  #
+  #     updateSelectInput(session, "dataexploVersion", choices = "", selected = "")
+  #
+  #   }
+  #
+  #
+  # }
 
-  temppath <- file.path(project_file, "0_pecc_project", "dataExplo.rds")
-
-  rapports <- try(readRDS(temppath))
-  if(class(rapports) != "try-error"){
-
-    rapports  %>%
-      filter(preloadeddataset == isolate(input$preloadeddataset) ) %>%
-      pull(dataexplonewVersion) -> rapports
-
-    if(length(rapports) > 0){
-    selected <- NA
-    if(length(rapports) > 0) selected <- rapports[[1]]
-    updateSelectInput(session, "dataexploVersion", choices = rapports, selected = rapports[[1]])
-    }else{
-
-      updateSelectInput(session, "dataexploVersion", choices = "", selected = "")
-
-    }
-
-
-  }
-
-
+print('end preloaddataset')
 })
 # #

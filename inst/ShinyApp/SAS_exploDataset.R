@@ -560,20 +560,22 @@ print(table1code)
 
 updateTextAreaInput(session, inputId = "table1_code", value =text)
 
-
+print('preevalcode1')
    table1 <- try( eval(table1code))
+   print(table1)
+print('postevalcode1')
 # print(table1)
    # print("ici deja")
 # print("on va slicer2")
 # print(table1 %>% as_tibble)
 
-if(class(table1) != "try-error"){
+if(class(table1)[[1]] != "try-error"){
 
   print("here")
   output$table1output <- renderTable(table1)
 
   }
-#
+# print('voila ')
 #   colnamestable1 <- table1 %>%
 #     slice(1) %>%
 #     as.data.frame()

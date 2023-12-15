@@ -8,9 +8,9 @@ observeEvent(input$plotexplosaveaction,{
 
   if(project_file != "none"){
 
-  path_temp <- file.path(project_file,"0_pecc_project/exploPlot.txt")
+  # path_temp <- file.path(project_file,"0_pecc_project/exploPlot.txt")
 
-  previous <- try(read.table(path_temp, header = T))
+  previous <- project$exploPplot #try(read.table(path_temp, header = T))
 # print('try-here')
   tibble(
     Name = isolate(input$plotexploname),
@@ -52,12 +52,6 @@ observeEvent(input$plotexplosaveaction,{
   ) -> new_line
 
 
-  if(class(previous) == "try-error"){
-
-
-    outputt <- new_line
-
-  }else{
 
 
  if(nrow(previous) == 0){
@@ -71,10 +65,9 @@ observeEvent(input$plotexplosaveaction,{
      bind_rows(new_line) -> outputt
  }
 
+ project$exploPplot <-  outputt
 
-  }
-
-  write.table(outputt, file = path_temp, row.names = F)
+  saveRDS(project, project$path)
 
 
   output$PlotexplorationSaved <- renderRHandsontable(rhandsontable(outputt %>%
@@ -84,7 +77,7 @@ observeEvent(input$plotexplosaveaction,{
                                                                      mutate(pdf = F) %>%
                                                                      select(Load, pdf, everything()),rowHeaders = NULL))
 
-
+  project <<- project
   ## update report possibilities
   try({read.table(stringsAsFactors = F, file.path(project_file, "0_pecc_project", "exploPlot.txt"), header = T) %>%
     as_tibble %>%
@@ -114,9 +107,9 @@ observeEvent(input$PlotexplorationSaved,{
 
   if(nrow(temp) > 0){
 
-    path_temp <- file.path(project_file,"0_pecc_project/exploPlot.txt")
+    # path_temp <- file.path(project_file,"0_pecc_project/exploPlot.txt")
 
-    temp <- read.table(path_temp, header = T, stringsAsFactors = F) %>%
+    temp <- project$exploPplot %>% #read.table(path_temp, header = T, stringsAsFactors = F) %>%
       filter(Name == temp$Name, Filter == temp$Filter | is.na(Filter)) %>% slice(1)
 
     # print(temp)

@@ -509,7 +509,7 @@ pecc_ui_reunif <- function(){dashboardPage(
 
 
               fluidRow(
-                div(style="display:inline-block; width: 200px;height: 75px;", textInput(inputId = "path_models", "File of models", value = "D:/these/Pecc_test")),
+                # div(style="display:inline-block; width: 200px;height: 75px;", textInput(inputId = "path_models", "File of models", value = "D:/these/Pecc_test")),
                 div(style="display:inline-block; width: 400px;height: 75px;", selectInput(inputId = "names_model", "Model", choices = "")),
                 div(style="display:inline-block; width: 100px;height: 75px;", actionButton(inputId = "load_model", "Load")),
                 div(style="display:inline-block; width: 200px;height: 75px;", textInput(inputId = "name_model", "Name to Save")),

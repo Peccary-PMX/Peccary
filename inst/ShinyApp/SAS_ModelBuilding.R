@@ -313,328 +313,70 @@ updateTextAreaInput(session, "mb_model", value = resu)
 observeEvent(input$load_model,{
 
   print("start load model")
-try({
-  # output$tree <- renderTree({
-  #   list(
-  #     root1 = "",
-  #     root2 = list(
-  #       SubListA = list(leaf1 = "", leaf2 = "", leaf3=""),
-  #       SubListB = list(leafA = "", leafB = "")
-  #     ),
-  #     root3 = list(
-  #       SubListA = list(leaf1 = "", leaf2 = "", leaf3=""),
-  #       SubListB = list(leafA = "", leafB = "")
-  #     )
-  #   )
-  # })
-  # print("test_okay")
-
-  # read.table("file:///F:/Peccary/testmodel.txt")[["model"]]
 
 
-  model <- try(read.table(isolate(input$path_models), stringsAsFactors = F) %>%
-                 filter(name == isolate(input$names_model)))
-  # modeltest <<- model
-# model <- modeltest
-  if(class(model)[1] == "try-error" ){
+  model <- project$models[[isolate(input$names_model)]]
 
-    showNotification("Unable to load model - reading model data failed", type = "error", duration = 10)
-    stop("Unable to load model - reading model data failes")
-  }
-
-
-
-  ### update model
-
+  print("start load model")
   updateTextAreaInput(session, "mb_model", value = model[["model"]])
+  updateTextInput(session, "name_model", value = isolate(input$names_model))
+
+  print("start load model")
+  updateTextAreaInput(session, "filterrExplo", value =   model$otherinput[["filterpoint"]])
+  updateSelectInput(session, "exploX", selected =  model$otherinput[["xpoint"]])
+  updateSelectInput(session, "exploY",  selected =   model$otherinput[["ypoint"]])
+  updateSelectInput(session, "nastringExplo", selected =   model$otherinput[["nastringExplo"]])
+  updateSelectInput(session, "sepExplo",  selected =   model$otherinput[["sepExplo"]])
+  updateSelectInput(session, "decExplo", selected =   model$otherinput[["decExplo"]])
+  updateNumericInput(session, "mb_time_from", value = model$otherinput[["from"]])
+  updateNumericInput(session, "mb_time_to", value = model$otherinput[["to"]])
+  updateNumericInput(session, "mb_time_by", value = model$otherinput[["by"]])
+  updateSelectInput(session, "matrix_sd_var",  selected =   model$otherinput[["matrix_sd_var"]])
 
 
-  updateTextInput(session, "name_model", value = model[["name"]])
-
-  ### update from to by and exploX
-
-  updateNumericInput(session, "mb_time_from", value = model[["from"]])
-  updateNumericInput(session, "mb_time_to", value = model[["to"]])
-  updateNumericInput(session, "mb_time_by", value = model[["by"]])
-
-  noneed <- F
-  if(is.na(model[["preloaded"]])) model[["preloaded"]] <- F
-
-  if(model[["preloaded"]] != isolate(input$preloadeddataset) & model[["preloaded"]] != F){
-  updateSelectInput(session, "preloadeddataset", selected = model[["preloaded"]])
-  updateSelectInput(session, "exploX", selected  = model[["xpoint"]])
-  updateSelectInput(session, "exploY", selected  = model[["ypoint"]])
-
-  showNotification(paste("Dataset changed to ", model[["preloaded"]], ", x = ",  model[["xpoint"]], ", y = ",  model[["ypoint"]]), type = "message", duration = 5)
-  noneed <- T
-  }
-
-  if(is.na(model[["xpoint"]])) model[["xpoint"]] <- F
-  if(is.na(model[["ypoint"]])) model[["ypoint"]] <- F
-
-  if((model[["xpoint"]] != isolate(input$exploX) | model[["ypoint"]] != isolate(input$exploY)) & noneed == F & model[["preloaded"]] != F){
-
-    try(updateSelectInput(session, "exploX", selected  = model[["xpoint"]]))
-    try(updateSelectInput(session, "exploY", selected  = model[["ypoint"]]))
-
-    showNotification(paste("Observation columns changed to  x = ",  model[["xpoint"]], ", y = ",  model[["ypoint"]]), type = "message", duration = 5)
 
 
-  }
+  output$mb_state <- renderRHandsontable({rhandsontable(model$compartmet, rowHeaders = NULL)})
+  output$mb_paramater <- renderRHandsontable({rhandsontable( model$parameter, rowHeaders = NULL)})
+  output$mb_event <- renderRHandsontable({ rhandsontable(model$event, rowHeaders = NULL)})
+  output$mb_plot_stat <- renderRHandsontable({rhandsontable( model$plotstat, rowHeaders = NULL)})
+  output$mb_matrix <- renderRHandsontable({rhandsontable( model$matrix_eta, rowHeaders = NULL)})
+  output$mb_output <- renderRHandsontable({ rhandsontable(model$mb_output, rowHeaders = NULL)})
+  output$mb_display2 <- renderRHandsontable({ rhandsontable(model$todisplay, rowHeaders = NULL)})
 
-  ######### update display2
-  # print("update display2")
-  # print(model[["todisplay"]])
-  # model[["todisplay"]]
-  # eval(parse_expr("tibble(Plot = c(\"1\", \"1\", \"1\", \"1\", \"1\", \"1\"), Check = c(\"FALSE\", \"TRUE\", \"TRUE\", \"TRUE\", \"TRUE\", \"FALSE\"), Todisplay = c(\"D\", \"G1\", \"G2\", \"S\", \"sum\", \"Vor1\"))"))
-  # eval(parse_expr(model[["todisplay"]]))
+  output$OD_sampling <- renderRHandsontable({
 
-  model[["todisplay"]] <- model[["todisplay"]] %>%  gsub(pattern = "\\\\\\\\", replacement =   "\\\\")
-
-
-  todisplay_loaded <- try(eval(parse_expr(model[["todisplay"]])) %>%
-                            mutate( Point = if_else(Point %in% c("", "NA"), F,  as.logical(Point)))%>%
-                            mutate(Check = if_else(Check %in% c("", "NA"), F, as.logical(Check))) %>%
-                            # map_df(~ if_else(.x, %in% c("", "NA"), NA_character_, .x ))
-                            # mutate(Check = as.logical(Check), Point = as.logical(Check)) %>%
-                            mutate(Filter_of_dataset = if_else(Filter_of_dataset %in% c("", "NA"), NA_character_, Filter_of_dataset)) %>%
-                            mutate(Plot = as.integer(Plot)) %>%
-                            mutate(YTYPE = as.double(if_else(YTYPE == "NA", "", YTYPE))))
-
-  if(class(todisplay_loaded)[1] == "try-error" ){
-
-    # print("ici !!!!!")
-    showNotification("Unable to load model - to display-failed", type = "warning", duration = 10)
-    # print("laaa")
-    # stop()
-  }else{
-
-    if(!"YTYPE" %in% names(todisplay_loaded)){
-
-
-      todisplay_loaded <- todisplay_loaded %>%
-        mutate(YTYPE = "")
-
-    }
-
-    output$mb_display2 <- renderRHandsontable({
-
-      rhandsontable(todisplay_loaded, width = 500, height = 200, rowHeaders = NULL)
-
-    })
-
-    ##### update mb_output
-
-
-    mb_output_loaded <- try(eval(parse_expr(model[["mb_output"]])))
-
-    if(class(mb_output_loaded)[1] %in% c("try-error", "logical") ){
-
-      # print("ici !!!!!")
-      showNotification("Unable to load mb_output -failed", type = "warning", duration = 10)
-
-      output$mb_output <- renderRHandsontable({
-
-        output_temp <-  tibble(output = factor(NA, levels = unique(todisplay_loaded$Todisplay)),
-                               YTYPE = NA_integer_, err_add = "0.1", err_prop = "0.3", export = T, rm = F)
-
-        rhandsontable( output_temp  , width = 500, height = 200, rowHeaders = NULL)
-      })
-
-    }else{
-
-      output_temp <- mb_output_loaded %>%
-        mutate(export = as.logical(export), rm = as.logical(rm),
-               YTYPE = if_else(YTYPE == "NA", "", YTYPE),
-               output = factor(output, levels = unique(todisplay_loaded$Todisplay)))
-
-      output$mb_output <- renderRHandsontable({
-
-        rhandsontable(output_temp, width = 500, height = 200, rowHeaders = NULL)
-
-      })
-
-    }
-
-
-    ## for PopED
-    output$OD_sampling <- renderRHandsontable({
-
-      tibbleoutput <-
-        tibble(Output = factor(NA, levels = unique(todisplay_loaded$Todisplay)),
-               Group = "1", Proto = "1", TimeSample = "c(1,5,10)", add = "0F", prop = "0.2F", nidgroup = 30, delete = F, cov = "")
-      rhandsontable(tibbleoutput, width = 1000, height = 200, rowHeaders = NULL)
-    })
-
-  }
-  # print("laaaa !!!!")
-
-
-  print("update matrix")
-  ### update mb_matrix
-  mb_matr <-  eval(parse_expr(model[["matrix_eta"]])) %>%
-    imap_dfr(function(x,y){
-
-      x[x == "NA"] <- NA
-
-      if(y != "Par"){
-
-        # x <-  as.double(x)
-        x <-  as.character(x)
-      }
-      x
-    })
-
-
-  mb_matr <- mb_matr[which(colnames(mb_matr) != "Par")]
- try({  rownames(mb_matr) <- colnames(mb_matr)})
-
-  output$mb_matrix <- renderRHandsontable({
-
-    rhandsontable(mb_matr, width = 500, height = 200)
-
+    tibbleoutput <-
+      tibble(Output = factor(NA, levels = unique(todisplay_loaded$Todisplay)),
+             Group = "1", Proto = "1", TimeSample = "c(1,5,10)", add = "0F", prop = "0.2F", nidgroup = 30, delete = F, cov = "")
+    rhandsontable(tibbleoutput, width = 1000, height = 200, rowHeaders = NULL)
   })
 
-  updateCheckboxInput(session, "matrix_diag", value = T)
+
+  # if(model[["preloaded"]] != isolate(input$preloadeddataset) & model[["preloaded"]] != F){
+  #
+  #
+  #   updateSelectInput(session, "preloadeddataset", selected = model$otherinput[["preloaded"]])
+  #   updateSelectInput(session, "exploX", selected  = model$otherinput[["xpoint"]])
+  #   updateSelectInput(session, "exploY", selected  = model$otherinput[["ypoint"]])
+  #
+  #   showNotification(paste("Dataset changed to ", model[["preloaded"]], ", x = ",  model[["xpoint"]], ", y = ",  model[["ypoint"]]), type = "message", duration = 5)
+  #   noneed <- T
+  # }
 
 
-  ## update mb_plot_stat
-  print("update plotstat")
-  # print(model[["plotstat"]])
-  plotstat_load <- eval(parse_expr(model[["plotstat"]])) %>%
-    mutate( xlog = if_else(xlog %in% c("", "NA"), F,  as.logical(xlog)))%>%
-    mutate(ylog = if_else(ylog %in% c("", "NA"), F, as.logical(ylog))) %>%
-    mutate(wrap = factor(wrap, levels = c("None", "Output", "Param","Event", "OP", "OE", "PE", "OPE", "O|P", "O|E", "P|E"))) %>%
-    mutate(delete = F) %>%
-    mutate(Plot = as.integer(Plot))
-
-  if(!"scalewrap" %in% names(plotstat_load)){
-
-    plotstat_load <- plotstat_load %>%
-      add_column(.after = "wrap",scalewrap = factor("free",levels= c("fixed", "free","free_x", "free_y")))
-
-  }else{
-
-
-    plotstat_load <- plotstat_load %>%
-      mutate(scalewrap = factor(scalewrap,levels= c("fixed", "free","free_x", "free_y")))
-
-
-  }
-
-
-
-  output$mb_plot_stat <- renderRHandsontable({
-
-    rhandsontable(plotstat_load, width = 400, height = 200, rowHeaders = NULL)
-
-  })
-
-  ## udpate state
-
-
-
-  print("update state")
-  output$mb_state <- renderRHandsontable({
-
-
-    state_temp <- eval(parse_expr(model[["compartmet"]]))
-
-    # remove old system
-    if("Param" %in% names(state_temp)) state_temp <- state_temp %>% select(-Param)
-    # if(!"Param" %in% names(state_temp)) state_temp <- state_temp %>% mutate(Param = factor("None", levels = c("None", "fix", "logN", "Norm")))
-
-    rhandsontable(state_temp, width = 200, height = 200, rowHeaders = NULL)
-
-  })
-
-  ## update value
-  print("update value")
-  output$mb_paramater <- renderRHandsontable({
-
-
-    temptemp <- eval(parse_expr(model[["parameter"]])) %>%
-      mutate(Distrib = if_else(Distrib == "fix", "NoVar", Distrib)) %>%
-      mutate(Distrib =  factor(Distrib, levels = c("logN", "Norm", "NoVar")))
-
-    if("E" %in% names(temptemp)){
-
-      # transform the old system
-      if(sum(temptemp$E %in% c("TRUE", "FALSE")) >1 ){
-
-        temptemp$E <- case_when(temptemp$E == "TRUE" ~ "Esti",
-                                temptemp$E == "FALSE" ~ "Fix",
-                                T ~ "Esti")
-      }
-
-
-    }else{
-
-      temptemp <- temptemp %>% mutate(E = "Esti")
-
-    }
-
-
-
-    temptemp$E <- factor(temptemp$E, levels = c("Esti", "Fix", "Input"))
-
-    rhandsontable(temptemp %>% arrange(Param), width = 200, height = 200, rowHeaders = NULL)
-
-  })
-
-  ## update event
-  print("update event")
-
-  events <-  try(eval(parse_expr(model[["event"]])) %>%  mutate(var = factor(var, levels = unique(deSolve_pecc(model$model)$state))))
-
-
-
-  if(class(events)[1] == "try-error" ){
-
-    showNotification("Unable to load model - update event failed", type = "warning", duration = 10)
-
-  }else{
-
-    events <- table_input(table = events)
-
-
-    output$mb_event <- renderRHandsontable({
-
-      rhandsontable(events, width = 400, height = 200, rowHeaders = NULL)
-
-    })
-
-  }
-
-
-
-
-  ## update exploration input
-
-  updateTextInput(session, "pathExplo", value =  model[["pathpoint"]])
-
-  separateur <- model[["sepExplo"]]
-  if(is.na(separateur)) separateur <- ""
+#
+#   updateTextInput(session, "pathExplo", value =  model[["pathpoint"]])
+#
+#   separateur <- model[["sepExplo"]]
+#   if(is.na(separateur)) separateur <- ""
 
 
 
   # explo <<- try(read.table( model[["pathpoint"]], header = T, na.strings =  model[["nastringExplo"]], sep = separateur , dec =  model[["decExplo"]]))
 
 
-
-  namesexplo <- try(str_split(readLines(model[["pathpoint"]], n = 1), "(\t)|;|,")[[1]])
-
-  if(class(namesexplo) != "try-error"){
-    updateTextAeraInput(session, "filterrExplo", value =  model[["filterpoint"]])
-    updateSelectInput(session, "exploX", choices = namesexplo, selected = model[["xpoint"]])
-    updateSelectInput(session, "exploY", choices = namesexplo, selected =  model[["ypoint"]])
-    updateSelectInput(session, "nastringExplo", choices = namesexplo, selected =  model[["nastringExplo"]])
-    updateSelectInput(session, "sepExplo", choices = namesexplo, selected =  model[["sepExplo"]])
-    updateSelectInput(session, "decExplo", choices = namesexplo, selected =  model[["decExplo"]])
-  }
-
   print("end load model")
-})
 })
 
 
@@ -3276,125 +3018,86 @@ eval(saemixmodelexpr)
 
 observeEvent(input$save_model,{
 
-
   elements <- list()
 
   # take the model
-  elements[["model"]] <- isolate(isolate(input$mb_model))
-  # print("test")
-  # take CMT initial values
-  # print(hot_to_r(input$mb_state))
-  elements[["compartmet"]] <-paste0("tibble(",
-                                    imap(hot_to_r(isolate(input$mb_state)),~  paste0(.y, " = c(",   reduce(paste0("\"",.x, "\""), paste , sep = ", "), ")")) %>%
-                                      reduce(paste, sep = ", "),
-                                    ")")
+  elements[["model"]] <- isolate(input$mb_model)
+
+
+  elements[["compartmet"]] <- hot_to_r(isolate(input$mb_state))
 
   # print(elements[["compartmet"]])
   # take parameter value
 
-
-  elements[["parameter"]] <- paste0("tibble(",
-                                    imap(hot_to_r(isolate(input$mb_paramater)),~  paste0(.y, " = c(",   reduce(paste0("\"",.x, "\""), paste , sep = ", "), ")")) %>%
-                                      reduce(paste, sep = ", "),
-                                    ")")
+  elements[["parameter"]] <- hot_to_r(isolate(input$mb_paramater))
   # print(elements[["parameter"]])
   #
   # take events
 
-  elements[["event"]] <- paste0("tibble(",
-                                imap(hot_to_r(isolate(input$mb_event)) ,~  paste0(.y, " = c(",   reduce(paste0("\"",.x, "\""), paste , sep = ", "), ")")) %>%
-                                  reduce(paste, sep = ", "),
-                                ")")
+  elements[["event"]] <- hot_to_r(isolate(input$mb_event))
   # tale to display
 
   # print(elements[["event"]])
   # print("test todisplay")
   # print(hot_to_r(isolate(input$mb_display2)))
 
-  elements[["todisplay"]] <- paste0("tibble(",
-                                    imap(hot_to_r(isolate(input$mb_display2))%>%
-                                           mutate(Filter_of_dataset = gsub("\\\"", "\\\\\\\\\"" , Filter_of_dataset)),~  paste0(.y, " = c(",   reduce(paste0("\"",.x, "\""), paste , sep = ", "), ")")) %>%
-                                      reduce(paste, sep = ", "),
-                                    ")")
-
+  elements[["todisplay"]] <- hot_to_r(isolate(input$mb_display2))
 
   # %>%
     # mutate(Filter_of_dataset = gsub("\\\"", "\\\\\"",Filter_of_dataset))
 
   # print(elements[["todisplay"]])
-  elements[["plotstat"]] <- paste0("tibble(",
-                                   imap(hot_to_r(isolate(input$mb_plot_stat)),~  paste0(.y, " = c(",   reduce(paste0("\"",.x, "\""), paste , sep = ", "), ")")) %>%
-                                     reduce(paste, sep = ", "),
-                                   ")")
+  elements[["plotstat"]] <- hot_to_r(isolate(input$mb_plot_stat))
   # print(elements[["plotstat"]])
 
-  elements[["matrix_eta"]] <- paste0("tibble(",
-                                     imap(hot_to_r(isolate(input$mb_matrix)),~  paste0(.y, " = c(",   reduce(paste0("\"",.x, "\""), paste , sep = ", "), ")")) %>%
-                                       reduce(paste, sep = ", "),
-                                     ")")
+  elements[["matrix_eta"]] <- hot_to_r(isolate(input$mb_matrix))
 
+  elements[["mb_output"]] <- hot_to_r(isolate(input$mb_output))
 
-  elements[["mb_output"]] <- paste0("tibble(",
-                                     imap(hot_to_r(isolate(input$mb_output)),~  paste0(.y, " = c(",   reduce(paste0("\"",.x, "\""), paste , sep = ", "), ")")) %>%
-                                       reduce(paste, sep = ", "),
-                                     ")")
   # tale to displau
   # print(elements[["matrix_eta"]])
   # take checks
   # print(elements %>% as.data.frame())
   # print("test iciiiii")
-  output <- elements %>% as.data.frame() %>%
-    mutate(name = isolate(input$name_model)) %>%
-    mutate(filterpoint = isolate(input$filterrExplo)) %>%
-    mutate(pathpoint = isolate(input$pathExplo)) %>%
-    mutate(xpoint = isolate(input$exploX)) %>%
-    mutate(ypoint = isolate(input$exploY)) %>%
-    mutate(preloaded = isolate(input$preloadeddataset)) %>%
-    mutate(nastringExplo= isolate(input$nastringExplo)) %>%
-    mutate(decExplo= isolate(input$decExplo)) %>%
-    mutate(sepExplo= isolate(input$sepExplo)) %>%
-    mutate(from = isolate(input$mb_time_from)) %>%
-    mutate(to = isolate(input$mb_time_to)) %>%
-    mutate(by = isolate(input$mb_time_by))
+  elements[["otherinput"]] <-
+
+
+    tibble(
+    name = isolate(input$name_model),
+    filterpoint = isolate(input$filterrExplo),
+   pathpoint = isolate(input$pathExplo),
+   xpoint = isolate(input$exploX),
+   ypoint = isolate(input$exploY),
+   preloaded = isolate(input$preloadeddataset),
+   nastringExplo= isolate(input$nastringExplo),
+   decExplo= isolate(input$decExplo),
+   sepExplo= isolate(input$sepExplo),
+   from = isolate(input$mb_time_from),
+   to = isolate(input$mb_time_to),
+  by = isolate(input$mb_time_by),
+  matrix_sd_var = isolate(input$matrix_sd_var)
+
+  )
 
   # print(names(output))
+  print('Ehding to save')
+  project$models[[isolate(input$name_model)]] <- elements
 
-  previousfile <- try(read.table( gsub("file:///", "",isolate(input$path_models))))
-
-  if(class(previousfile) != "try-error"){
-
-    outputtest <-  try(previousfile %>%
-                         filter(name != isolate(input$name_model)) %>%
-                         bind_rows(output))
-
-    if(class(outputtest) != "try-error") output <- outputtest
-
-  }
-
-  write.table(file = gsub("file:///", "",isolate(input$path_models)), x = output)
+  saveRDS(project, project$path)
 
 
-  models <-  try(read.table(isolate(input$path_models), stringsAsFactors = F) %>% pull(name))
-  # print(models)
+  updateSelectInput(session, inputId = "names_model", choices = names(project$models), selected = isolate(input$name_model))
 
-  if(class(models) !="try-error"){
-
-    updatemodels <- c(models, isolate(input$name_model))
-    updatemodels <- updatemodels[order(updatemodels)]
-
-    updateSelectInput(session, inputId = "names_model", choices = updatemodels, selected = isolate(input$name_model))
-  }
-
-
-  try({
-    models <-  try(read.table(file.path(project_file, "0_pecc_project","models.txt" ), stringsAsFactors = F) %>% pull(name))
-
-
-    if(class(models) !="try-error"){
-      updateSelectInput(session, inputId = "reportModelEq", choices = c(models[order(models)]))
-      updateSelectInput(session, inputId = "reportModelSimul", choices = c(models[order(models)]))
-    }
-  })
+#
+#   try({
+#     models <-  try(read.table(file.path(project_file, "0_pecc_project","models.txt" ), stringsAsFactors = F) %>% pull(name))
+#
+#
+#     if(class(models) !="try-error"){
+#       updateSelectInput(session, inputId = "reportModelEq", choices = c(models[order(models)]))
+#       updateSelectInput(session, inputId = "reportModelSimul", choices = c(models[order(models)]))
+#     }
+#   })
 
 })
 
