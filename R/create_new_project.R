@@ -3,7 +3,6 @@
 #' @author Thibaud Derippe
 #'
 #' @export
-
 create_pecc_shiny_project <- function(pathtemp = ''){
 
 path <- pathtemp %>%
