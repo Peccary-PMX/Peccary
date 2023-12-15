@@ -174,6 +174,16 @@ observeEvent(input$recentprojectfile,{
 
 
 
+observeEvent(input$getpathProject,{
+ test <-  file.choose()
+updateTextInput(session, 'Project_file_create', value = test)
+})
+
+observeEvent(input$getpathDataset,{
+  test <-  file.choose()
+  updateTextInput(session, 'path_dataset_manual', value = test)
+})
+
 
 
 
@@ -330,7 +340,7 @@ observeEvent(input$Project_load,{
 
   project <<- readRDS(project_file)
 
-
+print(project$models)
   datasets_df <- project$datasets
 
   # Reload list of datasets
@@ -386,7 +396,7 @@ observeEvent(input$Project_load,{
 
   # Put the dataset in preload
 
-
+ if(!is.null(names(project$models))) updateSelectInput(session, 'names_model', choices = names(project$models), selected = names(project$models)[[1]])
 
   ####
 

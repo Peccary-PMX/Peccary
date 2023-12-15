@@ -133,6 +133,7 @@ pecc_ui_reunif <- function(){dashboardPage(
               h3("Create Project"),
               br("Otherwise, do you want to create one?"),
               br(""),
+              actionButton("getpathProject", "click to find a path"),
               textInput(inputId = "Project_file_create", label = "Set where to put the project", width = "800", value = "file:///D:/these/demo"),
               # br("Do you want to create a complete project folder with subfolders? It will help you to store your files"),
               # checkboxInput(inputId = "creation_folder_cb", label = "Yes, create folders and subfolders", value = T),
@@ -159,6 +160,7 @@ pecc_ui_reunif <- function(){dashboardPage(
               br(""),
               br("Otherwise, you can add manually a file or just temporary use:"),
               br(""),
+              actionButton("getpathDataset", "click to find a path"),
               textInput(inputId = "path_dataset_manual", label = "Add path to a dataset", width = "800"),
 
               fluidRow(
