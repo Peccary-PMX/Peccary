@@ -185,6 +185,13 @@ observeEvent(input$getpathDataset,{
 })
 
 
+observeEvent(input$getpathProjectexisting,{
+  print('la')
+  test <-  file.choose()
+  updateTextInput(session, 'Project_file', value = test)
+})
+
+
 
 
 # Project Creation --------------------------------------------------------

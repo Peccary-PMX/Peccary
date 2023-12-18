@@ -125,8 +125,11 @@ pecc_ui_reunif <- function(){dashboardPage(
               br("First, do you have a Peccary project you want to load?"),
               br(""),
               selectInput(inputId = "recentprojectfile", label = "Previous Project", width ="800", choices = c("No Previous Project Available")),
+              actionButton("getpathProjectexisting", "or click to find a project file"),
               br(""),
               textInput(inputId = "Project_file", label = "Path to Project File", width = "800", value = ""),
+
+              br(""),
               actionButton(inputId = "Project_load", label = "Load project"),
               br("(if you want to change the loaded project, it is safier to restart Peccary Shiny App first)"),
               br(""),
