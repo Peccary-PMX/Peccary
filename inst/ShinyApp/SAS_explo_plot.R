@@ -5,8 +5,8 @@
 
 observeEvent(input$plotexplosaveaction,{
 
-
-  if(project_file != "none"){
+project
+  if(exists('project')){
 
   # path_temp <- file.path(project_file,"0_pecc_project/exploPlot.txt")
 
@@ -316,12 +316,14 @@ observeEvent(input$pdfPLotExplo, {
 
   if(nrow(temp) > 0){
 
-    path_temp <- file.path(project_file,"0_pecc_project/exploPlot.txt")
+    path_temp <- project$exploPplot
 
-    temp <- read.table(path_temp, header = T, stringsAsFactors = F) %>%
+    temp <- project$exploPplot %>%
       filter(Name %in% temp$Name)
 
-    try(pdf("test.pdf", width = 12))
+  path <-  paste0('peccary_plots_',  as.character(Sys.time()) %>% gsub(pattern = '\\..*', replacement= '') %>% gsub(pattern = ' |:|-', replacement= '_'),'.pdf')
+
+    try(pdf(path, width = 12))
 
     temp %>%
       # slice(1) -> x
@@ -331,7 +333,7 @@ observeEvent(input$pdfPLotExplo, {
       map(function(x){
 
 
-        if(input$exploNA ==T){
+        if(x$exploNA ==T){
 
 
           explo_temp <- explo %>%
@@ -350,7 +352,7 @@ observeEvent(input$pdfPLotExplo, {
         # print("subtitle")
         # print(x$subtitleExplo)
         # print(x$captionExplo)
-        output_temp <- plot_spagh(df = explo_temp,filter = Filter, facetscale = x$scaleExplo, loq = as.double(x$exploLOQ), x = x$exploX,median = x$exploMedian,  y = x$exploY, col = col, facetwrap = Wrap, facetgrid = Grid, id = x$exploID, point = x$exploPoint, standardisation = standar, ylog = x$exploYlog, xlog = x$exploXlog, ind_alpha = x$exploLine )
+        output_temp <- plot_spagh(workwithexpr = F, df = explo_temp,filter = Filter, facetscale = x$scaleExplo, loq = as.double(x$exploLOQ), x = x$exploX,median = x$exploMedian,  y = x$exploY, col = col, facetwrap = Wrap, facetgrid = Grid, group = x$exploID, point = x$exploPoint, standardisation = standar, ylog = x$exploYlog, xlog = x$exploXlog) #, ind_alpha = x$exploLine
         if(!(x$titleExplo %in%c("", "NA")|is.na(x$titleExplo))) output_temp <- output_temp + labs(subtitle = x$titleExplo)
         if(!(x$subtitleExplo %in%c("", "NA"))) output_temp <- output_temp + labs(subtitle = x$subtitleExplo)
         if(x$subtitleExplo  %in%c("", "NA")|is.na(x$subtitleExplo)) output_temp <- output_temp + labs(subtitle = NULL)
@@ -371,7 +373,9 @@ observeEvent(input$pdfPLotExplo, {
       })
 
     dev.off()
-    try(shell.exec("test.pdf"))
+    showNotification(paste0('File created:\n', getwd(), '/\n', path,'\n'), type = "message", duration = 10, closeButton = T)
+    # Sys.sleep(3)
+    # try(shell.exec(path))
 
   }
 
